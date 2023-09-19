@@ -1,0 +1,262 @@
+## SLIDE 2
+
+## Master Account:
+This is your AWS Organizations' root account.
+It's recommended that you avoid deploying any workloads in the master account. Instead, use it primarily for billing and management purposes.
+
+## Organizational Units (OUs):
+
+Based on environments:
+
+## Core Services: 
+For shared services that other accounts or environments might depend on. E.g., shared networking resources, central logging, etc.
+## Production: 
+For all your production workloads.
+
+## Development: 
+For all your development workloads.
+
+## Staging: 
+For your staging or pre-production workloads.
+
+## Security: 
+For logging, monitoring, and security services such as CloudTrail, AWS Config, and GuardDuty.
+## Sandbox: 
+For experimentation or personal projects. This gives your team a place to test and experiment without affecting other environments.
+
+
+## Individual Accounts:
+These should fall under the respective OUs:
+
+## Log Archive Account (Under Security): 
+Where all CloudTrail and other logs are aggregated.
+## Audit Account (Under Security): 
+For auditors to access and assess AWS resources without affecting the live environment.
+## Shared Services Account (Under Core Services): 
+Where shared resources are deployed.
+And individual accounts for various departments, projects, or teams as required.
+
+## Service Control Policies (SCPs):
+After creating the hierarchy, implement SCPs to enforce central policies at the OU or individual account level. For example, you can restrict certain AWS services from being used in the Development OU to manage costs.
+
+# SLIDE 2 CHALLENGES OF CURRENT INFRASTRUCTURE 
+
+## 1) Lack of Isolation:
+
+## Description: 
+Combining production, development, and staging within a single account lacks the necessary isolation that different environments require.
+
+## Impact: 
+An inadvertent change or error in the development environment could potentially affect production, leading to outages or disruptions.
+
+##  2) Security Concerns:
+## Description: 
+Sharing a single account across different workloads can lead to insufficient or overly permissive access controls.
+
+## Impact: 
+This increases the risk of unauthorized access, potential data breaches, or unintended changes.
+
+## 3) Billing Complexity:
+## Description: 
+With all workloads under a single account, it's challenging to allocate costs to specific projects, teams, or departments.
+## Impact: 
+This complicates cost tracking, budgeting, and chargebacks.
+
+## 4) Operational Overhead:
+
+## Description: 
+Management tasks such as patching, backups, and monitoring become intertwined across environments, making routine operations more complex.
+## Impact: 
+Increased risk of operational mistakes and higher time investments for tasks that should be straightforward.
+
+## 5) Limitations on Resource Policies:
+Description: With all workloads in one account, crafting IAM policies and resource-specific controls that cater to the nuances of each environment becomes challenging.
+
+## Impact: 
+Potential over-permissiveness or overly restrictive policies, leading to either security risks or hampered productivity.
+
+## 6) Scalability Issues:
+## Description: 
+As your organization grows and introduces more workloads, the existing structure will become even more challenging to manage and scale.
+
+## Impact: 
+Future growth may be hampered by the foundational inefficiencies of the current setup.
+
+## 7) Cross-Environment Interference:
+## Description: 
+Shared resources between environments, like compute limits or service quotas, could lead to resource contention.
+## Impact: 
+Unexpected outages in development could have cascading effects on staging or even production.
+
+## 7) Delayed Onboarding: 
+Prolonged access granting for new employees due to combined production and development environments
+## Impact 
+less productivity 
+
+
+# SLIDE 5  
+# WHY ADOPT ORGANIZATIONAL UNITS 
+
+## Enhanced Security and Isolation: 
+Separate accounts for different workloads reduce the risk of inadvertent changes affecting critical environments.
+
+## Simplified Cost Allocation: 
+Separate accounts make it easier to track costs per environment or project.
+
+## Operational Efficiency: 
+Clear demarcation of workloads facilitates streamlined operations, patching, backups, etc.
+
+## Scalability 
+## Rapid Onboarding 
+
+
+# SLIDE 6  PROPOSED NEW STRUCTURE OU / ACCOUNTS
+
+1. ## Aetonix Management Account:
+
+## Purpose: 
+Serves as the main point of entry for managing your AWS environment.
+## Importance:
+- Centralized access control and user management.
+- Single pane for viewing and managing the entire AWS environment.
+- Eases the application of broad policies and restrictions using Service Control Policies (SCPs).
+
+2. ## Core Services OU with Shared Services Account:
+## Purpose: 
+Houses foundational, shared services required by multiple environments or accounts.
+
+## Importance:
+
+- Promotes consistency and standardization across all environments.
+- Centralized management of shared services such as logging, monitoring, and identity services.
+- Reduces redundancy, ensures efficient use of resources, and simplifies operations.
+
+3. ## Security OU:
+## Purpose: 
+Dedicated to security and compliance.
+
+## Importance:
+## Log Archive Account: 
+- Centralizes logs, ensuring they are immutable and retained for audit purposes.
+## Audit Account: 
+- Provides a dedicated space for security and compliance teams to operate, monitor, and enforce policies without interference.
+- This separation limits potential exposure and enhances security posture by narrowing the "blast radius" in case of incidents.
+
+4. ## Development OU:
+
+## Purpose: 
+Contains all development-related activities.
+## Importance:
+## Development Account: 
+Provides a controlled environment for application development, separate from production, ensuring stability.
+## Sandbox Account: 
+- Offers an isolated space for experimentation, testing new AWS services, or learning, without risking operational infrastructure.
+- Encourages innovation while maintaining structured development practices.
+
+5. ## Staging OU with Staging Account:
+## Purpose: 
+For pre-production testing.
+## Importance:
+- Mimics the production environment, allowing for thorough testing before deployment.
+- Identifies potential issues or challenges before they reach production.
+- Helps ensure that deployments to production are smooth and have been vetted in an almost identical environment.
+
+6. ## Production OU with Production Account:
+## Purpose: 
+Houses the live, user-facing workloads.
+## Importance:
+- Ensures complete isolation of critical, customer-facing applications and services.
+- Reduces risks associated with accidental changes or disruptions that might come from other environments.
+- Facilitates specific security and performance optimizations necessary for live applications.
+
+This proposed structure follows the AWS best practice of account segmentation, ensuring that different workloads and responsibilities are isolated in their respective accounts and OUs. It will enhances security, improves operational efficiency, and offers flexibility. Each OU and account has a defined purpose, reducing confusion and ensuring clarity in operations and management.
+
+
+# SLIDE 7 
+
+ # BENEFITS OF THE PROPOSED STRUCTURE 
+
+## 1) Environment Isolation:
+  - Each environment (Development, Staging, Production) has its own dedicated AWS account. 
+  - Reduces risks from accidental changes or deletions.
+  - Ensures production stability isn't impacted by development or staging activities.\
+
+## 2) Granular Access Control:
+  - IAM roles and permissions can be precisely tailored to each environment.
+  - Easier to grant or limit permissions without unintended cross-environment effects.
+  - Complies with the principle of least privilege.
+
+## 3) Cost Allocation & Tracking:
+
+   - Simplified billing and cost tracking per environment or project.
+   - Easier to allocate resources and budgets to specific projects .
+   - Improved forecasting and budgeting.
+
+## 4) Enhanced Security:
+- Segregation of workloads minimizes the blast radius in case of security incidents.
+- Separate security OU allows centralized logging, monitoring, and response.
+- Service Control Policies (SCPs) will be used to enforce uniform security policies across accounts.
+
+## 5) Operational Efficiency:
+
+- Clear demarcation of responsibilities per environment.
+- Easier to implement environment-specific backup, maintenance, and update routines.
+- Streamlined CI/CD pipelines, with code moving through Development, Staging, and Production in a controlled manner.
+
+## 6) Flexibility and Scalability:
+
+- Individual accounts or OUs can be scaled as needed without impacting others.
+- Facilitates agile and modular growth, allowing new teams or projects to have their own environments quickly.
+
+## Centralized Core Services:
+
+- The Core Services OU promotes reusability and central management of common services.
+- Reduces redundancy, ensuring standardized configurations and services across accounts.
+
+## Sandbox for Innovation:
+
+ - Provides a risk-free environment for experimentation and learning.(POC)
+ - Encourages teams to explore new AWS services or build proof-of-concepts without affecting ongoing operations.
+
+## Audit and Compliance Readiness:
+ - Structured organization facilitates easier compliance checks and audits.
+ - Central logging and monitoring ensure that all activities are tracked and available for review.
+
+## Resource Optimization:
+- Resources (like EC2 instances or databases) can be optimized for each environment, avoiding over-provisioning or under-provisioning.
+
+
+
+## Anticipated Questions and Answers :
+
+## Implementation & Timeline:
+
+"We anticipate the restructuring to take approximately three months, starting with the initial setup of new OUs and accounts and followed by data and service migrations. The immediate next steps involve gathering detailed feedback from this session and beginning the setup of the foundational OUs."
+
+## Cost Implications:
+
+"While there might be some initial costs associated with the transition, the streamlined organization and enhanced monitoring capabilities should lead to better resource optimization and potential cost savings in the long run."
+
+## Operational Concerns:
+"We've planned the transition to minimize disruptions. Any potential downtime will be scheduled during off-peak hours, and teams will be informed well in advance."
+Security:
+"The new structure significantly enhances our security posture by compartmentalizing access and reducing the blast radius of potential issues. As with any transition, there might be short-term challenges, but we have protocols in place to address them."
+
+## Team Responsibilities:
+"We'll be conducting training sessions to ensure all teams are familiar with the new structure and any new tools or workflows. The aim is to enhance, not hinder, inter-team collaboration."
+Rollback & Contingency:
+"We have a comprehensive rollback plan in case of unforeseen challenges. Additionally, we'll be setting up monitoring metrics to gauge the success and performance of the new structure."
+Benefits & Justification:
+"Immediate benefits include better security, streamlined operations, and enhanced collaboration between teams. Given the current growth of our organization and the increasing complexity of our operations, this restructuring is a proactive step towards future-proofing our environment."
+
+## Technical Specifics:
+"Data and resources will be migrated using AWS-native tools and best practices to ensure a seamless transition. We do not anticipate significant changes in the tools we use, but there will be improvements in how we utilize them."
+## Stakeholder Involvement:
+
+"We value the input of all stakeholders. Regular updates will be provided throughout the transition, and we'll have feedback loops in place to ensure all concerns are addressed."
+
+## Long-term Vision:
+
+"This new structure is scalable and aligns with our long-term vision of growth and expansion. It's designed to adapt as our organization's needs evolve."
+
+
