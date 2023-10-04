@@ -2,8 +2,8 @@ import boto3
 
 # Configuration
 AWS_REGION = 'ca-central-1'
-DEV_VPC_ID = 'vpc-08a9101455ec0fabd'
-JENKINS_EC2_ID = 'i-06e0738c34f5cc9e6'
+DEV_VPC_ID = 'vpc-0f2a0bf6dc289fbe9'
+JENKINS_EC2_ID = 'i-0dfba4e367311b7f6'
 
 # Initialize a session using Amazon EC2
 ec2 = boto3.client('ec2', region_name=AWS_REGION)
