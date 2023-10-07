@@ -2,14 +2,13 @@ import boto3
 import time
 
 # Configuration
-INSTANCE_IDS = ["i-0cee11319a62ac6d5"]
+INSTANCE_IDS = ["i-0dfba4e367311b7f6", "i-038c0de2acd999639", "i-0cee11319a62ac6d5"]
 SOURCE_ACCOUNT = "370308050188"
-DEST_ACCOUNT = "369048206249"
+DEST_ACCOUNT = "816037198234"
 WAIT_INTERVAL = 60  # seconds
 MAX_WAIT_TIME = 3600  # seconds (1 hour)
 
 ec2 = boto3.client('ec2')
-
 
 def get_instance_name(instance_id):
     """Fetch the name of the instance using its tags."""
@@ -21,16 +20,20 @@ def get_instance_name(instance_id):
                     return tag['Value']
     return None
 
-
 def create_ami(instance_id):
     """Create an AMI and return its ID."""
     instance_name = get_instance_name(instance_id)
-    AMI_NAME = f"{instance_name}-AMI-{time.strftime('%Y-%m-%d')}" if instance_name else f"{instance_id}-AMI-{time.strftime('%Y-%m-%d')}"
-    print(f"Creating AMI for instance {instance_id}...")
+    AMI_NAME = f"{instance_id}-AMI-{time.strftime('%Y-%m-%d')}"
+    print(f"Creating AMI for instance {instance_id} with AMI name {AMI_NAME}...")
     response = ec2.create_image(InstanceId=instance_id, Name=AMI_NAME, NoReboot=True)
     print(f"AMI creation initiated. AMI ID: {response['ImageId']}")
-    return response['ImageId']
+    
+    if instance_name:
+        # Tagging the AMI with the EC2 instance's name
+        ec2.create_tags(Resources=[response['ImageId']], Tags=[{'Key': 'Name', 'Value': instance_name}])
+        print(f"AMI {response['ImageId']} tagged with EC2 instance name: {instance_name}")
 
+    return response['ImageId']
 
 def wait_for_ami(ami_id, instance_id):
     """Wait for the AMI to become available."""
@@ -53,7 +56,6 @@ def wait_for_ami(ami_id, instance_id):
     print(f"Reached maximum wait time of {MAX_WAIT_TIME/3600} hours for {instance_id}.")
     return False
 
-
 def share_ami_and_snapshot(ami_id):
     """Share the given AMI and its snapshot with the DEST_ACCOUNT."""
     snapshot_id = ec2.describe_images(ImageIds=[ami_id])['Images'][0]['BlockDeviceMappings'][0]['Ebs']['SnapshotId']
@@ -66,13 +68,11 @@ def share_ami_and_snapshot(ami_id):
 
     print(f"AMI {ami_id} and snapshot {snapshot_id} shared successfully!")
 
-
 def main():
     for instance_id in INSTANCE_IDS:
         ami_id = create_ami(instance_id)
         if wait_for_ami(ami_id, instance_id):
             share_ami_and_snapshot(ami_id)
-
 
 if __name__ == "__main__":
     main()

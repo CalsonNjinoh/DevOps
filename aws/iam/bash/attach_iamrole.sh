@@ -1,0 +1,1 @@
+arn:aws:iam::370308050188:instance-profile/ec2-full-access
