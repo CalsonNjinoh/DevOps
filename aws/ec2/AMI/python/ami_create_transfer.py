@@ -2,18 +2,30 @@ import boto3
 import time
 
 # Configuration
-INSTANCE_IDS = ["i-0dfba4e367311b7f6", "i-038c0de2acd999639", "i-0cee11319a62ac6d5"]
+INSTANCE_IDS = ["i-0cee11319a62ac6d5"]
 SOURCE_ACCOUNT = "370308050188"
-DEST_ACCOUNT = "816037198234"
+DEST_ACCOUNT = "369048206249"
 WAIT_INTERVAL = 60  # seconds
 MAX_WAIT_TIME = 3600  # seconds (1 hour)
 
 ec2 = boto3.client('ec2')
 
 
+def get_instance_name(instance_id):
+    """Fetch the name of the instance using its tags."""
+    response = ec2.describe_instances(InstanceIds=[instance_id])
+    for reservation in response['Reservations']:
+        for instance in reservation['Instances']:
+            for tag in instance.get('Tags', []):
+                if tag['Key'] == 'Name':
+                    return tag['Value']
+    return None
+
+
 def create_ami(instance_id):
     """Create an AMI and return its ID."""
-    AMI_NAME = f"{instance_id}-AMI-{time.strftime('%Y-%m-%d')}"
+    instance_name = get_instance_name(instance_id)
+    AMI_NAME = f"{instance_name}-AMI-{time.strftime('%Y-%m-%d')}" if instance_name else f"{instance_id}-AMI-{time.strftime('%Y-%m-%d')}"
     print(f"Creating AMI for instance {instance_id}...")
     response = ec2.create_image(InstanceId=instance_id, Name=AMI_NAME, NoReboot=True)
     print(f"AMI creation initiated. AMI ID: {response['ImageId']}")
