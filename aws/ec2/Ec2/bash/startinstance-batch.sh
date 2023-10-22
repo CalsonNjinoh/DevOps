@@ -1,6 +1,6 @@
 #!/bin/bash
 
-##### Provide the AWS region and VPC ID #####
+##### Provide the AWS region and VPC ID for the script to identify which ec2 its going to stop  #####
 #############################################
 
 AWS_Region='ca-central-1'
