@@ -1,9 +1,10 @@
 provider "aws" {
   region = var.region
-
-  //assume_role {
-    //role_arn = "arn:aws:iam::427366260079:role/CrossAccountRoute53Access"  # IAM role created in the management account
-  //}
+}
+  module "iam_roles" {
+  source          = "../../modules/iam_roles"
+  create_ssm_role = true
+  # Set other role variables to true or false as needed
 }
 
 ########################################
@@ -119,7 +120,8 @@ module "vasco_redis" {
   subnet_id      = module.network.private_subnet_ids[0]
   instance_name  = "vasco-redis"
   key_name       = module.ssh_key_pair.key_name
-}
+  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
+  }
 
 module "tupacase" {
   source         = "../../modules/ec2_instance"
@@ -128,6 +130,7 @@ module "tupacase" {
   subnet_id      = module.network.private_subnet_ids[0]
   instance_name  = "tupacase"
   key_name       = module.ssh_key_pair.key_name
+  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
 }
 
 module "green_posgress-logs" {
@@ -137,6 +140,7 @@ module "green_posgress-logs" {
   subnet_id      = module.network.private_subnet_ids[0]
   instance_name  = "green-postgress-logs"
   key_name       = module.ssh_key_pair.key_name
+  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
 }
 module "Glaretram_MQTT" {
   source         = "../../modules/ec2_instance"
@@ -145,6 +149,7 @@ module "Glaretram_MQTT" {
   subnet_id      = module.network.private_subnet_ids[0]
   instance_name  = "glaretram_mqtt"
   key_name       = module.ssh_key_pair.key_name
+  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
 }
 module "glaretram" {
   source         = "../../modules/ec2_instance"
@@ -153,6 +158,7 @@ module "glaretram" {
   subnet_id      = module.network.private_subnet_ids[0]
   instance_name  = "glaretram"
   key_name       = module.ssh_key_pair.key_name
+  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
 }
 module "bobones_mongo-replica" {
   source         = "../../modules/ec2_instance"
@@ -161,6 +167,7 @@ module "bobones_mongo-replica" {
   subnet_id      = module.network.private_subnet_ids[0]
   instance_name  = "bobones_mongo_replica"
   key_name       = module.ssh_key_pair.key_name
+  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
 }
 module "mongo_arbiter" {
   source         = "../../modules/ec2_instance"
@@ -169,6 +176,7 @@ module "mongo_arbiter" {
   subnet_id      = module.network.private_subnet_ids[0]
   instance_name  = "mongo_arbiter"
   key_name       = module.ssh_key_pair.key_name
+  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
 }
 module "valize_mongo_replica" {
   source         = "../../modules/ec2_instance"
@@ -177,6 +185,7 @@ module "valize_mongo_replica" {
   subnet_id      = module.network.private_subnet_ids[0]
   instance_name  = "valize_mongo_replica"
   key_name       = module.ssh_key_pair.key_name
+  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
 }
 
 module "iam_role_for_logs" {
@@ -235,6 +244,7 @@ data "aws_s3_bucket" "dashboard_existing_bucket" {
   bucket = "ae-dev-dashboard-1423efee"  
 }
 
+
 ########################################
 # Opensearch Domain Creation
 ########################################
@@ -244,7 +254,7 @@ module "opensearch" {
   source = "../../modules/opensearch"
   domain_name           = "devtest"
   elasticsearch_version = "OpenSearch_2.9"
-  instance_type         = "r6g.large.elasticsearch"
+  instance_type         = "t3.medium.elasticsearch"
   instance_count        = 2
   ebs_enabled           = true
   volume_size           = 20
@@ -252,3 +262,4 @@ module "opensearch" {
   security_group_ids    = [module.security_group.security_group_id]
   private_subnet_ids    = module.network.private_subnet_ids[0]
   }
+
