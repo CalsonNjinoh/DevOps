@@ -28,3 +28,8 @@ variable "vpc_security_group_ids" {
   type        = list(string)
   default     = []
 }
+variable "iam_instance_profile_name" {
+  type = string
+  description = "The name of the IAM instance profile to attaach to the EC2 instance"
+  default = ""
+}
