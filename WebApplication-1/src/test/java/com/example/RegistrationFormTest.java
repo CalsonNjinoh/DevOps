@@ -8,7 +8,6 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 public class RegistrationFormTest {
     public static void main(String[] args) {
         // Set the path to your ChromeDriver executable
-        // You can change the directory here
         System.setProperty("webdriver.gecko.driver", "G:\\FIVERR_PROJECTS\\WebApplication\\geckodriver.exe");
 
         // Initialize ChromeDriver
