@@ -10,7 +10,7 @@ Create a backup of your `jenkins.war` file to ensure you can restore your setup 
 
 **Command to backup the `jenkins.war` file:**
 ```bash
-sudo cp /usr/share/java/jenkins.war /path/to/backup/location/jenkins.war.backup
+```sudo cp /usr/share/java/jenkins.war /path/to/backup/location/jenkins.war.backup
 Upgrade Process
 
 Stop Jenkins Service
