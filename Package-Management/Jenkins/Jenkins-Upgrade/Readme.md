@@ -1,76 +1,64 @@
-Jenkins Upgrade Guide
+markdown
+Copy code
+# Jenkins Upgrade Guide
 
-Purpose
+## Purpose
+This document provides the necessary steps to safely upgrade Jenkins on an Ubuntu server. The upgrade includes a backup of the current Jenkins WAR file, stopping the service, performing the upgrade, and restarting the service.
 
-This guide provides detailed instructions for upgrading Jenkins on an Ubuntu server. The upgrade process involves backing up the existing Jenkins WAR file, stopping the Jenkins service, applying the upgrade, and then restarting the service. This guide is designed to ensure a smooth upgrade with minimal downtime.
+## Backup Jenkins WAR File
+Create a backup of your `jenkins.war` file to ensure you can restore your setup if needed.
 
-Backup Jenkins WAR File
-
-Before upgrading, it's important to backup the jenkins.war file. This file contains the core Jenkins application and is essential for restoration in case of any issues.
-
-Locating the jenkins.war File:
-
-Navigate to the Jenkins web interface.
-Go to Manage Jenkins → System Information.
-Find the executable-war property to see the path of the jenkins.war file.
-Backup Command:
-
+**Command to backup the `jenkins.war` file:**
 ```bash
-copy code
-sudo cp /usr/share/java/jenkins.war /path/to/backup/location/
+sudo cp /usr/share/java/jenkins.war /path/to/backup/location/jenkins.war.backup
 Upgrade Process
 
 Stop Jenkins Service
-First, stop the Jenkins service to prevent any conflicts during the upgrade.
+Ensure no jobs are running and stop the Jenkins service to prevent any conflicts during the upgrade.
 
-Command to Stop Jenkins:
+Command to stop Jenkins:
 
-```bash
+bash
 Copy code
 sudo systemctl stop jenkins
-
 Update Package List
-Ensure your system's package list is up-to-date before upgrading Jenkins.
+Refresh your system's package list to ensure you have the latest updates before upgrading Jenkins.
 
-Command to Update Packages:
+Command to update packages:
 
-```bash
+bash
 Copy code
 sudo apt update
 Upgrade Jenkins
-Apply the Jenkins upgrade using the following command.
+Perform the upgrade using the following command. This will upgrade Jenkins to the latest version available in your package repository.
 
-Command to Upgrade Jenkins:
+Command to upgrade Jenkins:
 
-```bash
+bash
 Copy code
-sudo apt-get upgrade jenkins
-Restart Jenkins Service
-After the upgrade, restart the Jenkins service to apply the changes.
+sudo apt-get install jenkins
+Start Jenkins Service
+Once the upgrade is complete, start the Jenkins service to apply the changes.
 
-Command to Start Jenkins:
+Command to start Jenkins:
 
-```bash
+bash
 Copy code
 sudo systemctl start jenkins
 Post-Upgrade Steps
 
 Verify the Upgrade
-Ensure that Jenkins has been successfully upgraded by checking the version number in the web interface.
+Check the Jenkins version in the web interface to confirm the upgrade was successful.
 
 Delete the Old WAR File (Optional)
-If the upgrade was successful and there's no need to rollback, you can delete the old jenkins.war file.
+If you've verified the upgrade and are sure you won't need to rollback, you can remove the backup of the old jenkins.war file.
 
-Command to Remove Old WAR File:
+Command to remove the old WAR file:
 
-```bash
+bash
 Copy code
-sudo rm /path/to/backup/location/jenkins.war
-Rollback Procedure
+sudo rm /path/to/backup/location/jenkins.war.backup
+vbnet
+Copy code
 
-In case of any issues with the new version:
-
-Stop the Jenkins service.
-Restore the jenkins.war file from your backup.
-Restart the Jenkins service.
-Replace /path/to/backup/location/ with your actual backup location. This README format follows best practices for clarity and ease of use, making it straightforward for users to follow the upgrade process.
+Remember to replace `/path/to/backup/location/` with the actual directory where you'd like to store your backup. Ensure you remove the triple backticks from the last line of the document in your README.md file on GitHub.
