@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation Template: Setup Transit Gateway and share it using AWS RAM.'
+
+Parameters:
+  AetonixVPCID:
+    Type: String
+    Description: VPC ID for the Aetonix VPC.
+    Default: vpc-0f2a0bf6dc289fbe9
+
+  AetonixRouteTableID:
+    Type: String
+    Description: The ID of the route table in the Aetonix VPC
+    Default: rtb-02a49b378199294e2
+
+  AetonixSubnetIDs:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Comma-delimited list of subnet IDs in the Aetonix VPC for the Transit Gateway attachment.
+    Default: "subnet-0b5f956c3e442eade,subnet-04e715c26924277f8"
+
+  SharedAccountId:
+    Type: String
+    Description: AWS Account ID with which you want to share the Transit Gateway.
+    Default: 369048206249 
+
+  DevelopmentVPCCIDR:
+    Type: String
+    Description: CIDR block for the Development VPC.
+    Default: "10.20.0.0/16"
+
+
+Resources:
+  MyTransitGateway:
+    Type: 'AWS::EC2::TransitGateway'
+    Properties:
+      Description: 'Cross-account Transit Gateway'
+      AutoAcceptSharedAttachments: 'enable'
+      DefaultRouteTableAssociation: 'enable'
+      DefaultRouteTablePropagation: 'enable'
+      DnsSupport: 'enable'
+      VpnEcmpSupport: 'enable'
+
+  TransitGatewayAttachmentAetonix:
+    Type: 'AWS::EC2::TransitGatewayVpcAttachment'
+    Properties:
+      TransitGatewayId: !Ref MyTransitGateway
+      VpcId: !Ref AetonixVPCID
+      SubnetIds: !Ref AetonixSubnetIDs
+
+  TransitGatewayResourceShare:
+    Type: 'AWS::RAM::ResourceShare'
+    Properties:
+      Name: 'Transit-Gateway-Resource-Share'
+      Principals: 
+        - !Ref SharedAccountId
+      ResourceArns: 
+        - !GetAtt MyTransitGateway.TransitGatewayArn
+      AllowExternalPrincipals: false
+
+  
+  RouteToDevelopmentVPC:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref AetonixRouteTableID  
+      DestinationCidrBlock: !Ref DevelopmentVPCCIDR
+      TransitGatewayId: !Ref MyTransitGateway
+
+Outputs:
+  TransitGatewayID:
+    Description: 'The ID of the Transit Gateway'
+    Value: !Ref MyTransitGateway
+  TransitGatewayAttachmentAetonixID:
+    Description: 'The ID of the Transit Gateway Attachment for the Aetonix VPC'
+    Value: !Ref TransitGatewayAttachmentAetonix
+  TransitGatewayResourceShareID:
+    Description: 'The ID of the Transit Gateway Resource Share'
+    Value: !Ref TransitGatewayResourceShare

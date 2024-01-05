@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation Template: Attach shared Transit Gateway and update routes in the Development Account.'
+
+Parameters:
+  SharedTransitGatewayId:
+    Type: String
+    Description: The ID of the shared Transit Gateway.
+    
+
+  DevelopmentVPCID:
+    Type: String
+    Description: VPC ID for the Development VPC.
+    Default: vpc-06c85a2282f8ddb40
+
+  DevelopmentSubnetIDs:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Comma-delimited list of subnet IDs in the Development VPC for the Transit Gateway attachment.
+    Default: subnet-01e74c989ababcab2,subnet-008c2b987c977fd6a,subnet-0ef286b4170a17565
+
+  AetonixVPCCIDR:
+    Type: String
+    Description: CIDR block for the Aetonix VPC.
+    Default: 10.0.0.0/16
+
+  DevelopmentRouteTableID:
+    Type: String
+    Description: The ID of the route table in the Development VPC.
+    Default: rtb-045f294aebefc7fc4
+
+Resources:
+  TransitGatewayAttachmentDevelopment:
+    Type: 'AWS::EC2::TransitGatewayVpcAttachment'
+    Properties:
+      TransitGatewayId: !Ref SharedTransitGatewayId
+      VpcId: !Ref DevelopmentVPCID
+      SubnetIds: !Ref DevelopmentSubnetIDs
+
+  RouteToAetonixVPC:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref DevelopmentRouteTableID
+      DestinationCidrBlock: !Ref AetonixVPCCIDR
+      TransitGatewayId: !Ref SharedTransitGatewayId
+
+Outputs:
+  TransitGatewayAttachmentDevelopmentID:
+    Description: 'The ID of the Transit Gateway Attachment for the Development VPC'
+    Value: !Ref TransitGatewayAttachmentDevelopment
