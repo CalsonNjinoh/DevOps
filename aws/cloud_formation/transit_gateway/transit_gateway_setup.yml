@@ -2,30 +2,30 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'AWS CloudFormation Template: Setup Transit Gateway and share it using AWS RAM.'
 
 Parameters:
-  AetonixVPCID:
+  SharedServiceAccountVPCID:
     Type: String
-    Description: VPC ID for the Aetonix VPC.
-    Default: vpc-0f2a0bf6dc289fbe9
+    Description: VPC ID for the shared-service account VPC.
+    Default: vpc-0cf966816f0c0ac2a
 
-  AetonixRouteTableID:
+  SharedServiceAccountRouteTableID:
     Type: String
     Description: The ID of the route table in the Aetonix VPC
-    Default: rtb-02a49b378199294e2
+    Default: rtb-0c7963c481fa9f819
 
-  AetonixSubnetIDs:
+  SharedServiceAccountSubnetIDs:
     Type: List<AWS::EC2::Subnet::Id>
     Description: Comma-delimited list of subnet IDs in the Aetonix VPC for the Transit Gateway attachment.
-    Default: "subnet-0b5f956c3e442eade,subnet-04e715c26924277f8"
+    Default: "subnet-0bf75c815d474fbd3,subnet-07f94efd562b84549,subnet-044fd3e98a3ab6848"
 
-  SharedAccountId:
+  CrossAccountSharedAccountId:
     Type: String
     Description: AWS Account ID with which you want to share the Transit Gateway.
-    Default: 369048206249 
+    Default: 762372983622 
 
   DevelopmentVPCCIDR:
     Type: String
     Description: CIDR block for the Development VPC.
-    Default: "10.20.0.0/16"
+    Default: "10.0.0.0/16"
 
 
 Resources:
@@ -39,19 +39,19 @@ Resources:
       DnsSupport: 'enable'
       VpnEcmpSupport: 'enable'
 
-  TransitGatewayAttachmentAetonix:
+  TransitGatewayAttachmentSharedService:
     Type: 'AWS::EC2::TransitGatewayVpcAttachment'
     Properties:
       TransitGatewayId: !Ref MyTransitGateway
-      VpcId: !Ref AetonixVPCID
-      SubnetIds: !Ref AetonixSubnetIDs
+      VpcId: !Ref SharedServiceAccountVPCID
+      SubnetIds: !Ref SharedServiceAccountSubnetIDs
 
   TransitGatewayResourceShare:
     Type: 'AWS::RAM::ResourceShare'
     Properties:
       Name: 'Transit-Gateway-Resource-Share'
       Principals: 
-        - !Ref SharedAccountId
+        - !Ref CrossAccountSharedAccountId
       ResourceArns: 
         - !GetAtt MyTransitGateway.TransitGatewayArn
       AllowExternalPrincipals: false
@@ -59,8 +59,9 @@ Resources:
   
   RouteToDevelopmentVPC:
     Type: 'AWS::EC2::Route'
+    DependsOn: TransitGatewayAttachmentSharedService
     Properties:
-      RouteTableId: !Ref AetonixRouteTableID  
+      RouteTableId: !Ref SharedServiceAccountRouteTableID  
       DestinationCidrBlock: !Ref DevelopmentVPCCIDR
       TransitGatewayId: !Ref MyTransitGateway
 
@@ -70,7 +71,7 @@ Outputs:
     Value: !Ref MyTransitGateway
   TransitGatewayAttachmentAetonixID:
     Description: 'The ID of the Transit Gateway Attachment for the Aetonix VPC'
-    Value: !Ref TransitGatewayAttachmentAetonix
+    Value: !Ref TransitGatewayAttachmentSharedService
   TransitGatewayResourceShareID:
     Description: 'The ID of the Transit Gateway Resource Share'
     Value: !Ref TransitGatewayResourceShare
