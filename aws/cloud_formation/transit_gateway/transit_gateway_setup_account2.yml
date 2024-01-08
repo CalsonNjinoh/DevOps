@@ -5,27 +5,28 @@ Parameters:
   SharedTransitGatewayId:
     Type: String
     Description: The ID of the shared Transit Gateway.
+    Default: tgw-0592a2fbf4aba5d78
     
 
   DevelopmentVPCID:
     Type: String
     Description: VPC ID for the Development VPC.
-    Default: vpc-06c85a2282f8ddb40
+    Default: vpc-0f202cb342e012632
 
   DevelopmentSubnetIDs:
     Type: List<AWS::EC2::Subnet::Id>
     Description: Comma-delimited list of subnet IDs in the Development VPC for the Transit Gateway attachment.
-    Default: subnet-01e74c989ababcab2,subnet-008c2b987c977fd6a,subnet-0ef286b4170a17565
+    Default: subnet-0d40d1b0f86eed6e1,subnet-0708e29057bcff7c9,subnet-01443d42878c89a5c
 
-  AetonixVPCCIDR:
+  SharedServiceAccountVPCCIDR:
     Type: String
     Description: CIDR block for the Aetonix VPC.
-    Default: 10.0.0.0/16
+    Default: 10.20.0.0/16
 
   DevelopmentRouteTableID:
     Type: String
     Description: The ID of the route table in the Development VPC.
-    Default: rtb-045f294aebefc7fc4
+    Default: rtb-04b6f26e6b924da27
 
 Resources:
   TransitGatewayAttachmentDevelopment:
@@ -35,11 +36,12 @@ Resources:
       VpcId: !Ref DevelopmentVPCID
       SubnetIds: !Ref DevelopmentSubnetIDs
 
-  RouteToAetonixVPC:
+  RouteToSharedServiceAccountVPC:
     Type: 'AWS::EC2::Route'
+    DependsOn: TransitGatewayAttachmentDevelopment
     Properties:
       RouteTableId: !Ref DevelopmentRouteTableID
-      DestinationCidrBlock: !Ref AetonixVPCCIDR
+      DestinationCidrBlock: !Ref SharedServiceAccountVPCCIDR
       TransitGatewayId: !Ref SharedTransitGatewayId
 
 Outputs:
