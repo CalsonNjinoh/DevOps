@@ -6,9 +6,10 @@ def create_cloudwatch_alarm(region, function_name, sns_topic_arn):
     alarm_name = f"lambda{function_name}ErrorAlert"
     cloudwatch_client.put_metric_alarm(
         AlarmName=alarm_name,
-        AlarmDescription=f"Alarm when function {function_name} has errors",
+        AlarmDescription=f"Alarm for function {function_name} errors",
         ActionsEnabled=True,
-        AlarmActions=[sns_topic_arn],
+        AlarmActions=[sns_topic_arn],  # Actions for when the alarm state is 'In Alarm'
+        OKActions=[sns_topic_arn],     # Actions for when the alarm state returns to 'OK'
         MetricName='Errors',
         Namespace='AWS/Lambda',
         Statistic='Average',
@@ -17,24 +18,6 @@ def create_cloudwatch_alarm(region, function_name, sns_topic_arn):
         EvaluationPeriods=1,
         Threshold=2,
         ComparisonOperator='GreaterThanOrEqualToThreshold',
-        TreatMissingData='missing',
-    )
-
-    # Creating OK alarm
-    ok_alarm_name = f"{alarm_name}-OK"
-    cloudwatch_client.put_metric_alarm(
-        AlarmName=ok_alarm_name,
-        AlarmDescription=f"Alarm when function {function_name} is OK",
-        ActionsEnabled=True,
-        AlarmActions=[sns_topic_arn],
-        MetricName='Errors',
-        Namespace='AWS/Lambda',
-        Statistic='Average',
-        Dimensions=[{'Name': 'FunctionName', 'Value': function_name}],
-        Period=300,  # 5 minutes
-        EvaluationPeriods=1,
-        Threshold=2,
-        ComparisonOperator='LessThanThreshold',
         TreatMissingData='missing',
     )
 
@@ -57,8 +40,7 @@ def main():
         if function_name.lower() == 'exit':
             break
         create_cloudwatch_alarm(region, function_name, sns_topic_arn)
-        print(f"CloudWatch alarms created for function {function_name} in region {region}.")
+        print(f"CloudWatch alarm created for function {function_name} in region {region}.")
 
 if __name__ == "__main__":
     main()
-
