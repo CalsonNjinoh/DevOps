@@ -3,14 +3,13 @@ import boto3
 def create_cloudwatch_alarm(region, function_name, sns_topic_arn):
     cloudwatch_client = boto3.client('cloudwatch', region_name=region)
 
-    # Updated alarm naming convention with hyphens
     alarm_name = f"lambda-{function_name}-error-alert"
     cloudwatch_client.put_metric_alarm(
         AlarmName=alarm_name,
         AlarmDescription=f"Alarm for function {function_name} errors",
         ActionsEnabled=True,
-        AlarmActions=[sns_topic_arn],  # Actions for when the alarm state is 'In Alarm'
-        OKActions=[sns_topic_arn],     # Actions for when the alarm state returns to 'OK'
+        AlarmActions=[sns_topic_arn],
+        OKActions=[sns_topic_arn],
         MetricName='Errors',
         Namespace='AWS/Lambda',
         Statistic='Average',
@@ -24,6 +23,7 @@ def create_cloudwatch_alarm(region, function_name, sns_topic_arn):
 
 def main():
     region = input("Enter the AWS region: ")
+    lambda_client = boto3.client('lambda', region_name=region)
     sns_client = boto3.client('sns', region_name=region)
 
     # Fetching the SNS topic ARN
@@ -36,10 +36,10 @@ def main():
     if not sns_topic_arn:
         raise Exception("SNS topic 'Notifications' not found")
 
-    while True:
-        function_name = input("Enter the Lambda function name (or 'exit' to finish): ")
-        if function_name.lower() == 'exit':
-            break
+    # List all Lambda functions in the specified region
+    functions = lambda_client.list_functions()['Functions']
+    for function in functions:
+        function_name = function['FunctionName']
         create_cloudwatch_alarm(region, function_name, sns_topic_arn)
         print(f"CloudWatch alarm created for function {function_name} in region {region}.")
 
