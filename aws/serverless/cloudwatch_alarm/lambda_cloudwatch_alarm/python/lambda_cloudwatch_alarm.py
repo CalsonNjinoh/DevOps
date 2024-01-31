@@ -26,7 +26,20 @@ def create_cloudwatch_alarm(region, function_name, sns_topic_arn):
         return
 
     cloudwatch_client.put_metric_alarm(
-        # [Alarm creation details as previously provided...]
+        AlarmName=alarm_name,
+        AlarmDescription=f"Alarm for function {function_name} errors",
+        ActionsEnabled=True,
+        AlarmActions=[sns_topic_arn],
+        OKActions=[sns_topic_arn],
+        MetricName='Errors',
+        Namespace='AWS/Lambda',
+        Statistic='Average',
+        Dimensions=[{'Name': 'FunctionName', 'Value': function_name}],
+        Period=300,  # 5 minutes
+        EvaluationPeriods=1,
+        Threshold=2,
+        ComparisonOperator='GreaterThanOrEqualToThreshold',
+        TreatMissingData='missing',
     )
     print(f"CloudWatch alarm created for function {function_name} in region {region}.")
 
