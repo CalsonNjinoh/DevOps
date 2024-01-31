@@ -1,47 +1,35 @@
 import boto3
 
+def alarm_exists(cloudwatch_client, alarm_name):
+    # Check if an alarm with the given name already exists
+    existing_alarms = cloudwatch_client.describe_alarms(AlarmNames=[alarm_name])
+    return len(existing_alarms['MetricAlarms']) > 0
+
 def create_cloudwatch_alarm(region, function_name, sns_topic_arn):
     cloudwatch_client = boto3.client('cloudwatch', region_name=region)
-
     alarm_name = f"lambda-{function_name}-error-alert"
+
+    if alarm_exists(cloudwatch_client, alarm_name):
+        print(f"Alarm already exists for {function_name}, skipping...")
+        return
+
     cloudwatch_client.put_metric_alarm(
-        AlarmName=alarm_name,
-        AlarmDescription=f"Alarm for function {function_name} errors",
-        ActionsEnabled=True,
-        AlarmActions=[sns_topic_arn],
-        OKActions=[sns_topic_arn],
-        MetricName='Errors',
-        Namespace='AWS/Lambda',
-        Statistic='Average',
-        Dimensions=[{'Name': 'FunctionName', 'Value': function_name}],
-        Period=300,  # 5 minutes
-        EvaluationPeriods=1,
-        Threshold=2,
-        ComparisonOperator='GreaterThanOrEqualToThreshold',
-        TreatMissingData='missing',
+        # [Alarm creation details as previously provided...]
     )
+    print(f"CloudWatch alarm created for function {function_name} in region {region}.")
 
 def main():
     region = input("Enter the AWS region: ")
     lambda_client = boto3.client('lambda', region_name=region)
     sns_client = boto3.client('sns', region_name=region)
 
-    # Fetching the SNS topic ARN
-    sns_topic_arn = None
-    for topic in sns_client.list_topics()['Topics']:
-        if topic['TopicArn'].endswith(':Notifications'):
-            sns_topic_arn = topic['TopicArn']
-            break
-
-    if not sns_topic_arn:
-        raise Exception("SNS topic 'Notifications' not found")
+    # [SNS topic ARN fetching logic...]
 
     # List all Lambda functions in the specified region
     functions = lambda_client.list_functions()['Functions']
     for function in functions:
         function_name = function['FunctionName']
         create_cloudwatch_alarm(region, function_name, sns_topic_arn)
-        print(f"CloudWatch alarm created for function {function_name} in region {region}.")
 
 if __name__ == "__main__":
     main()
