@@ -8,8 +8,11 @@ def lambda_function_exists(lambda_client, function_name):
         return False
 
 def alarm_exists(cloudwatch_client, alarm_name):
-    existing_alarms = cloudwatch_client.describe_alarms(AlarmNames=[alarm_name])
-    return len(existing_alarms['MetricAlarms']) > 0
+    paginator = cloudwatch_client.get_paginator('describe_alarms')
+    for page in paginator.paginate(AlarmNames=[alarm_name]):
+        if page['MetricAlarms']:
+            return True
+    return False
 
 def create_cloudwatch_alarm(region, function_name, sns_topic_arn):
     cloudwatch_client = boto3.client('cloudwatch', region_name=region)
@@ -35,7 +38,7 @@ def create_cloudwatch_alarm(region, function_name, sns_topic_arn):
         Namespace='AWS/Lambda',
         Statistic='Average',
         Dimensions=[{'Name': 'FunctionName', 'Value': function_name}],
-        Period=300,  # 5 minutes
+        Period=300,
         EvaluationPeriods=1,
         Threshold=2,
         ComparisonOperator='GreaterThanOrEqualToThreshold',
@@ -47,7 +50,6 @@ def main():
     region = input("Enter the AWS region: ")
     sns_client = boto3.client('sns', region_name=region)
 
-    # Fetching the SNS topic ARN
     sns_topic_arn = None
     for topic in sns_client.list_topics()['Topics']:
         if topic['TopicArn'].endswith(':Notifications'):
