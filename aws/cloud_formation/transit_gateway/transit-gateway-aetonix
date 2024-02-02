@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation Template: Setup Transit Gateway and share it using AWS RAM.'
+
+Parameters:
+  SharedServiceAccountVPCID:
+    Type: String
+    Description: VPC ID for the shared-service account VPC.
+    Default: vpc-0c2a06713a04bf2e3
+
+  SharedServiceAccountRouteTableID:
+    Type: String
+    Description: The ID of the route table in the Aetonix VPC
+    Default: rtb-0b63f8ca95bdbb914
+
+  SharedServiceAccountSubnetIDs:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Comma-delimited list of subnet IDs in the Aetonix VPC for the Transit Gateway attachment.
+    Default: "subnet-061e2a99dbece13a5,subnet-0ed655cddb47598a1,subnet-0b5eada63a1d3cc91"
+
+  CrossAccountSharedAccountId:
+    Type: String
+    Description: AWS Account ID with which you want to share the Transit Gateway.
+    Default: 973334513903
+
+  DevelopmentVPCCIDR:
+    Type: String
+    Description: CIDR block for the Development VPC.
+    Default: "10.20.0.0/16"
+
+
+Resources:
+  MyTransitGateway:
+    Type: 'AWS::EC2::TransitGateway'
+    Properties:
+      Description: 'Cross-account Transit Gateway'
+      AutoAcceptSharedAttachments: 'enable'
+      DefaultRouteTableAssociation: 'enable'
+      DefaultRouteTablePropagation: 'enable'
+      DnsSupport: 'enable'
+      VpnEcmpSupport: 'enable'
+
+  TransitGatewayAttachmentSharedService:
+    Type: 'AWS::EC2::TransitGatewayVpcAttachment'
+    Properties:
+      TransitGatewayId: !Ref MyTransitGateway
+      VpcId: !Ref SharedServiceAccountVPCID
+      SubnetIds: !Ref SharedServiceAccountSubnetIDs
+
+  TransitGatewayResourceShare:
+    Type: 'AWS::RAM::ResourceShare'
+    Properties:
+      Name: 'Transit-Gateway-Resource-Share'
+      Principals: 
+        - !Ref CrossAccountSharedAccountId
+      ResourceArns: 
+        - !GetAtt MyTransitGateway.TransitGatewayArn
+      AllowExternalPrincipals: false
+
+  
+  RouteToDevelopmentVPC:
+    Type: 'AWS::EC2::Route'
+    DependsOn: TransitGatewayAttachmentSharedService
+    Properties:
+      RouteTableId: !Ref SharedServiceAccountRouteTableID  
+      DestinationCidrBlock: !Ref DevelopmentVPCCIDR
+      TransitGatewayId: !Ref MyTransitGateway
+
+Outputs:
+  TransitGatewayID:
+    Description: 'The ID of the Transit Gateway'
+    Value: !Ref MyTransitGateway
+  TransitGatewayAttachmentAetonixID:
+    Description: 'The ID of the Transit Gateway Attachment for the Aetonix VPC'
+    Value: !Ref TransitGatewayAttachmentSharedService
+  TransitGatewayResourceShareID:
+    Description: 'The ID of the Transit Gateway Resource Share'
+    Value: !Ref TransitGatewayResourceShare
