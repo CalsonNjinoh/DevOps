@@ -1,0 +1,20 @@
+{
+  "Records": [
+    {
+      "EventSource": "aws:sns",
+      "Sns": {
+        "Type": "Notification",
+        "MessageId": "8f7c7116-9d71-507c-8dc1-2f5381e1d4b0",
+        "TopicArn": "arn:aws:sns:us-east-2:891377304437:Notification",
+        "Subject": "OK: \"AWS/EC2 CPUUtilization InstanceId=i-07f6c090a50385a75\" in US East (Ohio)",
+        "Message": "{\"AlarmName\":\"AWS/EC2 CPUUtilization InstanceId=i-07f6c090a50385a75\",\"AlarmDescription\":\"This alarm helps to monitor the CPU utilization of an EC2 instance. Depending on the application, consistently high utilization levels might be normal. But if performance is degraded, and the application is not constrained by disk I/O, memory, or network resources, then a maxed-out CPU might indicate a resource bottleneck or application performance problems. High CPU utilization might indicate that an upgrade to a more CPU intensive instance is required. If detailed monitoring is enabled, you can change the period to 60 seconds instead of 300 seconds. For more information, see [Enable or turn off detailed monitoring for your instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html).\",\"AWSAccountId\":\"891377304437\",\"AlarmConfigurationUpdatedTimestamp\":\"2024-02-13T07:28:03.640+0000\",\"NewStateValue\":\"OK\",\"NewStateReason\":\"Threshold Crossed: 3 out of the last 3 datapoints [0.06723163841808 (13/02/24 07:19:00), 0.06559139784946219 (13/02/24 07:14:00), 0.0672316384180788 (13/02/24 07:09:00)] were not greater than the threshold (80.0) (minimum 1 datapoint for ALARM -> OK transition).\",\"StateChangeTime\":\"2024-02-13T07:29:20.165+0000\",\"Region\":\"US East (Ohio)\",\"AlarmArn\":\"arn:aws:cloudwatch:us-east-2:891377304437:alarm:AWS/EC2 CPUUtilization InstanceId=i-07f6c090a50385a75\",\"OldStateValue\":\"INSUFFICIENT_DATA\",\"OKActions\":[\"arn:aws:sns:us-east-2:891377304437:Notification\"],\"AlarmActions\":[\"arn:aws:sns:us-east-2:891377304437:Notification\"],\"InsufficientDataActions\":[\"arn:aws:sns:us-east-2:891377304437:Notification\"],\"Trigger\":{\"MetricName\":\"CPUUtilization\",\"Namespace\":\"AWS/EC2\",\"StatisticType\":\"Statistic\",\"Statistic\":\"AVERAGE\",\"Unit\":null,\"Dimensions\":[{\"value\":\"i-07f6c090a50385a75\",\"name\":\"InstanceId\"}],\"Period\":300,\"EvaluationPeriods\":3,\"DatapointsToAlarm\":3,\"ComparisonOperator\":\"GreaterThanThreshold\",\"Threshold\":80.0,\"TreatMissingData\":\"missing\",\"EvaluateLowSampleCountPercentile\":\"\"}}",
+        "Timestamp": "2024-02-13T07:29:20.221Z",
+        "SignatureVersion": "1",
+        "Signature": "EXAMPLE_SIGNATURE",
+        "SigningCertUrl": "https://sns.us-east-2.amazonaws.com/SimpleNotificationService-60eadc530605d63b8e62a523676ef735.pem",
+        "UnsubscribeUrl": "https://sns.us-east-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-2:891377304437:Notification:39011712-4690-4c4d-9115-3c205dc09f6c"
+      }
+    }
+  ]
+}
+
