@@ -38,6 +38,11 @@ class CloudWatchAlarmParser:
                     'color': self.color,
                     'fields': [
                         {
+                            'title': 'AWS Account ID',
+                            'value': self.msg["AWSAccountId"],
+                            'short': True
+                        },
+                        {
                             "title": "Alarm Name",
                             "value": self.msg["AlarmName"],
                             "short": True
@@ -89,10 +94,10 @@ def lambda_handler(event, context):
     sns_message = json.loads(event['Records'][0]['Sns']['Message'])
     print(sns_message)
 
-    webhook_url = 'https://hooks.slack.com/services/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' # Set destination URL here
+    webhook_url = 'https://hooks.slack.com/services/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' 
 
     slack_data = CloudWatchAlarmParser(sns_message).slack_data()
-    slack_data["channel"] = 'cloudwatch-alerts'
+    slack_data["channel"] = 'system-alerts-other-accounts'
 
 
     request = Request(
