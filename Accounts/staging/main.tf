@@ -139,9 +139,9 @@ module "asg" {
   source                        = "../../Modules/Auto_scaling"
   create_alb_security_group     = true
   asg_name                      = "APIserver"
-  min_size                      = 1
+  min_size                      = 0
   max_size                      = 3
-  desired_capacity              = 2
+  desired_capacity              = 1
   vpc_id                        = module.network.vpc_id
   subnet_ids                    = module.network.public_subnet_ids
   launch_template_name          = "api-launch-template"
@@ -188,7 +188,7 @@ module "cloudwatch_alarms_staging" {
       threshold          = 75
       evaluation_periods = 2
       period             = 300
-      // Removed the direct ARN assignment here
+      
     },
     "disk_read_ops" = {
       metric_name        = "DiskReadOps"
@@ -198,13 +198,22 @@ module "cloudwatch_alarms_staging" {
       evaluation_periods = 2
       period             = 300
     }
-    // Additional metrics if any...
   }
   
-  sns_topic_arn = "arn:aws:sns:us-east-2:891377304437:Notification" // Pass the ARN as a module argument
+  sns_topic_arn = module.staging_sns_topic.sns_topic_arn
 }
 
 # repeat this step for each ec2-instance 
+
+########################################
+# SNS Topic Creation 
+########################################
+
+module "staging_sns_topic" {
+  source                      = "../../modules/sns_topic"
+  sns_topic_name              = "staging-alarm-notifications"
+  subscription_email_addresses = ["calson@team4techsolutions.com"]
+}
 
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_alarm_vasco_redis" {
   alarm_name                = "cpu-high-vasco-redis"
@@ -216,11 +225,69 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_alarm_vasco_redis" {
   statistic                 = "Average"
   threshold                 = "75"
   alarm_description         = "This metric monitors EC2 CPU utilization"
-  alarm_actions             = ["arn:aws:sns:us-east-2:891377304437:Notification"]
-  ok_actions                = ["arn:aws:sns:us-east-2:891377304437:Notification"]
-  insufficient_data_actions = ["arn:aws:sns:us-east-2:891377304437:Notification"]
+  alarm_actions             = [module.staging_sns_topic.sns_topic_arn]
+  ok_actions                = [module.staging_sns_topic.sns_topic_arn]
+  insufficient_data_actions = [module.staging_sns_topic.sns_topic_arn]
 
   dimensions = {
     InstanceId = module.vasco_redis.instance_id
   }
+}
+
+########################################
+# S3 creation For lambda deployment
+########################################
+
+resource "aws_s3_bucket" "lambda_deployment_bucket" {
+  bucket = "my-lambda-deployment-bucket2" # name should be change used for demo 
+  
+  tags = {
+    Purpose = "Lambda Deployment Packages"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "lambda_deployment_bucket_versioning" {
+  bucket = aws_s3_bucket.lambda_deployment_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+
+########################################
+# Lambda Creation 
+########################################
+
+module "lambda_example" {
+  #depends_on = [aws_s3_bucket_object.lambda_deployment]
+  source            = "../../modules/lambda_function"
+  function_name     = "my-staging-lambda-function"
+  handler           = "index.handler"
+  runtime           = "python3.8"
+  s3_bucket         = "my-lambda-deployment-bucket2"
+  s3_key            = "lambda_function_payload.zip"
+  source_code_hash  = filebase64sha256("/Users/njinohcalsonchenwi/DEVOPS/sns-to-slack/lambda_function_payload.zip")
+  role_arn          = "arn:aws:iam::891377304437:role/service-role/sns-to-slack-lambda-role-wgoqliwo" # new role needs to be created and reference here 
+}
+
+resource "aws_s3_object" "lambda_deployment" {
+  bucket       = aws_s3_bucket.lambda_deployment_bucket.bucket
+  key          = "lambda_function_payload.zip"
+  source       = "/Users/njinohcalsonchenwi/DEVOPS/sns-to-slack/lambda_function_payload.zip"
+  etag         = filemd5("/Users/njinohcalsonchenwi/DEVOPS/sns-to-slack/lambda_function_payload.zip")
+}
+
+
+resource "aws_lambda_permission" "sns_invoke" {
+  statement_id  = "AllowSNSInvoke_${module.lambda_example.lambda_function_name}"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda_example.lambda_function_arn
+  principal     = "sns.amazonaws.com"
+  source_arn    = module.staging_sns_topic.sns_topic_arn
+}
+
+resource "aws_sns_topic_subscription" "lambda_subscription" {
+  topic_arn = module.staging_sns_topic.sns_topic_arn
+  protocol  = "lambda"
+  endpoint  = module.lambda_example.lambda_function_arn
 }
