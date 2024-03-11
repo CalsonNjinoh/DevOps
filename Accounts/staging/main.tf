@@ -65,26 +65,36 @@ module "glaretram_alb_sg" {
 ########################################
 # Create EC2 using Custom EC2 AMI
 ########################################
-
-module "vasco_redis" {
-  source         = "../../modules/ec2_instance"
-  ami_id         = "ami-05fb0b8c1424f266b"
-  instance_type  = "t2.micro"
-  subnet_id      = module.network.private_subnet_ids[0]
-  instance_name  = "vasco-redis"
-  key_name       = module.ssh_key_pair.key_name
-  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
+locals {
+  instances = {
+    vasco_redis = {
+      ami_id         = "ami-05fb0b8c1424f266b"
+      instance_type  = "t2.micro"
+      instance_name  = "vasco-redis"
+      # Add any other parameters needed for your module
+    },
+    tupacase = {
+      ami_id         = "ami-05fb0b8c1424f266b"
+      instance_type  = "t2.micro"
+      instance_name  = "tupacase"
+      # Add any other parameters needed for your module
+    }
+    # Add more instances as needed
   }
-
-module "tupacase" {
-  source         = "../../modules/ec2_instance"
-  ami_id         = "ami-05fb0b8c1424f266b"
-  instance_type  = "t2.micro"
-  subnet_id      = module.network.private_subnet_ids[0]
-  instance_name  = "tupacase"
-  key_name       = module.ssh_key_pair.key_name
-  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
 }
+
+module "ec2_instances" {
+  for_each        = local.instances
+  source          = "../../modules/ec2_instance"
+  ami_id          = each.value.ami_id
+  instance_type   = each.value.instance_type
+  subnet_id       = module.network.private_subnet_ids[0]  # Assuming the same subnet for simplicity.
+  instance_name   = each.key
+  key_name        = module.ssh_key_pair.key_name
+  iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
+  # Include any other parameters your module expects.
+}
+
 
 ########################################
 # Create VPC, Subnets, Route Tables
@@ -169,41 +179,25 @@ resource "aws_autoscaling_policy" "cpu_target" {
     target_value = 60.0
   }
 }
+resource "aws_cloudwatch_metric_alarm" "asg_cpu_utilization_alarm" {
+  alarm_name          = "asg-cpu-high-${module.asg.asg_name}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 70
+  alarm_description   = "This metric monitors ASG CPU utilization"
 
-
-########################################
-# Cloud Watch Alarms 
-########################################
-
-# In your root module's main.tf or where the module is called
-
-module "cloudwatch_alarms_staging" {
-  source = "../../Modules/Cloudwatch_Alarms"
-
-  alarm_metrics = {
-    "cpu_utilization" = {
-      metric_name        = "CPUUtilization"
-      namespace          = "AWS/EC2"
-      statistic          = "Average"
-      threshold          = 75
-      evaluation_periods = 2
-      period             = 300
-      
-    },
-    "disk_read_ops" = {
-      metric_name        = "DiskReadOps"
-      namespace          = "AWS/EC2"
-      statistic          = "Average"
-      threshold          = 100
-      evaluation_periods = 2
-      period             = 300
-    }
+  dimensions = {
+    AutoScalingGroupName = module.asg.asg_name
   }
-  
-  sns_topic_arn = module.staging_sns_topic.sns_topic_arn
-}
 
-# repeat this step for each ec2-instance 
+  alarm_actions             = [module.staging_sns_topic.sns_topic_arn]
+  ok_actions                = [module.staging_sns_topic.sns_topic_arn]
+  insufficient_data_actions = [module.staging_sns_topic.sns_topic_arn]
+}
 
 ########################################
 # SNS Topic Creation 
@@ -215,8 +209,10 @@ module "staging_sns_topic" {
   subscription_email_addresses = ["calson@team4techsolutions.com"]
 }
 
-resource "aws_cloudwatch_metric_alarm" "cpu_utilization_alarm_vasco_redis" {
-  alarm_name                = "cpu-high-vasco-redis"
+resource "aws_cloudwatch_metric_alarm" "cpu_utilization_alarm" {
+  for_each                  = module.ec2_instances
+
+  alarm_name                = "cpu-high-${each.key}"
   comparison_operator       = "GreaterThanThreshold"
   evaluation_periods        = "2"
   metric_name               = "CPUUtilization"
@@ -224,15 +220,38 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_alarm_vasco_redis" {
   period                    = "300"
   statistic                 = "Average"
   threshold                 = "75"
-  alarm_description         = "This metric monitors EC2 CPU utilization"
+  alarm_description         = "This metric monitors EC2 CPU utilization for ${each.key}"
   alarm_actions             = [module.staging_sns_topic.sns_topic_arn]
   ok_actions                = [module.staging_sns_topic.sns_topic_arn]
   insufficient_data_actions = [module.staging_sns_topic.sns_topic_arn]
 
   dimensions = {
-    InstanceId = module.vasco_redis.instance_id
+    InstanceId = each.value.instance_id
   }
 }
+
+resource "aws_cloudwatch_metric_alarm" "disk_usage_alarm" {
+  for_each                  = module.ec2_instances
+
+  alarm_name                = "DiskUsage-${each.key}"
+  comparison_operator       = "GreaterThanThreshold"
+  evaluation_periods        = "2"
+  metric_name               = "disk_used_percent"
+  namespace                 = "CWAgent"
+  period                    = "300"
+  statistic                 = "Average"
+  threshold                 = "80"
+  alarm_description         = "This metric monitors disk usage for ${each.key}"
+  alarm_actions             = [module.staging_sns_topic.sns_topic_arn]
+  ok_actions                = [module.staging_sns_topic.sns_topic_arn]
+  insufficient_data_actions = [module.staging_sns_topic.sns_topic_arn]
+
+  dimensions = {
+    InstanceId = each.value.instance_id
+  }
+}
+
+
 
 ########################################
 # S3 creation For lambda deployment
@@ -259,13 +278,13 @@ resource "aws_s3_bucket_versioning" "lambda_deployment_bucket_versioning" {
 ########################################
 
 module "lambda_example" {
-  #depends_on = [aws_s3_bucket_object.lambda_deployment]
+  //depends_on = [aws_s3_bucket_object.lambda_deployment]
   source            = "../../modules/lambda_function"
   function_name     = "my-staging-lambda-function"
   handler           = "index.handler"
   runtime           = "python3.8"
-  s3_bucket         = "my-lambda-deployment-bucket2"
-  s3_key            = "lambda_function_payload.zip"
+  s3_bucket         = aws_s3_bucket.lambda_deployment_bucket.bucket
+  s3_key            = aws_s3_object.lambda_deployment.key
   source_code_hash  = filebase64sha256("/Users/njinohcalsonchenwi/DEVOPS/sns-to-slack/lambda_function_payload.zip")
   role_arn          = "arn:aws:iam::891377304437:role/service-role/sns-to-slack-lambda-role-wgoqliwo" # new role needs to be created and reference here 
 }
@@ -276,7 +295,6 @@ resource "aws_s3_object" "lambda_deployment" {
   source       = "/Users/njinohcalsonchenwi/DEVOPS/sns-to-slack/lambda_function_payload.zip"
   etag         = filemd5("/Users/njinohcalsonchenwi/DEVOPS/sns-to-slack/lambda_function_payload.zip")
 }
-
 
 resource "aws_lambda_permission" "sns_invoke" {
   statement_id  = "AllowSNSInvoke_${module.lambda_example.lambda_function_name}"
@@ -291,3 +309,4 @@ resource "aws_sns_topic_subscription" "lambda_subscription" {
   protocol  = "lambda"
   endpoint  = module.lambda_example.lambda_function_arn
 }
+
