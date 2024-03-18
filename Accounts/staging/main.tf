@@ -285,7 +285,7 @@ module "lambda_example" {
   runtime           = "python3.8"
   s3_bucket         = aws_s3_bucket.lambda_deployment_bucket.bucket
   s3_key            = aws_s3_object.lambda_deployment.key
-  source_code_hash  = filebase64sha256("/Users/njinohcalsonchenwi/DEVOPS/sns-to-slack/lambda_function_payload.zip")
+  source_code_hash  = filebase64sha256("/Users/njinohcalsonchenwi/Aetonix/DevOps/Accounts/staging/lambda_function_payload.zip")
   role_arn          = "arn:aws:iam::891377304437:role/service-role/sns-to-slack-lambda-role-wgoqliwo" # new role needs to be created and reference here 
 }
 
