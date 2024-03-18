@@ -79,7 +79,6 @@ locals {
       instance_name  = "tupacase"
       # Add any other parameters needed for your module
     }
-    # Add more instances as needed
   }
 }
 
@@ -251,6 +250,112 @@ resource "aws_cloudwatch_metric_alarm" "disk_usage_alarm" {
   }
 }
 
+resource "aws_cloudwatch_metric_alarm" "status_check_failed" {
+  for_each            = module.ec2_instances
+
+  alarm_name          = "EC2-status-check-failed-${each.key}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "StatusCheckFailed"
+  namespace           = "AWS/EC2"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = "0" # Trigger the alarm if the status check fails even once
+  alarm_description         = "This metric monitors disk usage for ${each.key}"
+  alarm_actions             = [module.staging_sns_topic.sns_topic_arn]
+  ok_actions                = [module.staging_sns_topic.sns_topic_arn]
+  insufficient_data_actions = [module.staging_sns_topic.sns_topic_arn]
+
+  dimensions = {
+    InstanceId = each.value.instance_id
+  }
+}
+
+
+
+############################################
+# Cloudwatch Alarm Metrics for loadbalancers 
+############################################
+
+resource "aws_cloudwatch_metric_alarm" "unhealthy_host_count" {
+  alarm_name                = "unhealthy-host-count"
+  comparison_operator       = "GreaterThanThreshold"
+  evaluation_periods        = "2"
+  metric_name               = "UnHealthyHostCount"
+  namespace                 = "AWS/ELB"
+  period                    = 60
+  statistic                 = "Average"
+  threshold                 = 1
+  alarm_description         = "This metric monitors unhealthy hosts"
+  actions_enabled           = true
+  alarm_actions             = [module.staging_sns_topic.sns_topic_arn]
+  ok_actions                = [module.staging_sns_topic.sns_topic_arn]
+  insufficient_data_actions = [module.staging_sns_topic.sns_topic_arn]
+
+  dimensions = {
+    LoadBalancerName = "APIserver-alb"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "target_response_time" {
+  alarm_name                = "high-response-time"
+  comparison_operator       = "GreaterThanThreshold"
+  evaluation_periods        = "2"
+  metric_name               = "TargetResponseTime"
+  namespace                 = "AWS/ApplicationELB"
+  period                    = 60
+  statistic                 = "Average"
+  threshold                 = 0.5
+  alarm_description         = "This metric monitors ALB target response time"
+  actions_enabled           = true
+  alarm_actions             = [module.staging_sns_topic.sns_topic_arn]
+  ok_actions                = [module.staging_sns_topic.sns_topic_arn]
+  insufficient_data_actions = [module.staging_sns_topic.sns_topic_arn]
+
+  dimensions = {
+    LoadBalancer = "APIserver-alb"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "http_5xx_errors" {
+  alarm_name                = "http-5xx-errors-alarm"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = "2"
+  metric_name               = "HTTPCode_Target_5XX_Count"
+  namespace                 = "AWS/ApplicationELB"
+  period                    = 300
+  statistic                 = "Sum"
+  threshold                 = 10
+  alarm_description         = "Alarm when the count of HTTP 5XX errors exceeds 10 within 5 minutes"
+  actions_enabled           = true
+  alarm_actions             = [module.staging_sns_topic.sns_topic_arn]
+  ok_actions                = [module.staging_sns_topic.sns_topic_arn]
+  insufficient_data_actions = [module.staging_sns_topic.sns_topic_arn]
+
+  dimensions = {
+    LoadBalancer = "APIserver-alb"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "http_4xx_errors" {
+  alarm_name                = "http-4xx-errors-alarm"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = "2"
+  metric_name               = "HTTPCode_Target_4XX_Count"
+  namespace                 = "AWS/ApplicationELB"
+  period                    = 300
+  statistic                 = "Sum"
+  threshold                 = 100
+  alarm_description         = "Alarm when the count of HTTP 4XX errors exceeds 100 within 5 minutes"
+  actions_enabled           = true
+  alarm_actions             = [module.staging_sns_topic.sns_topic_arn]
+  ok_actions                = [module.staging_sns_topic.sns_topic_arn]
+  insufficient_data_actions = [module.staging_sns_topic.sns_topic_arn]
+
+  dimensions = {
+    LoadBalancer = "APIserver-alb"
+  }
+}
 
 
 ########################################
