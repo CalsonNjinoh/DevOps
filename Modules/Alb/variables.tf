@@ -23,3 +23,21 @@ variable "alb_dns_name" {
   description = "The DNS name of the ALB"
   type        = string
 }
+
+
+variable "alarm_action_arn" {
+  description = "ARN of the alarm action (e.g., SNS Topic ARN)"
+  type        = string
+}
+
+variable "ok_action_arn" {
+  description = "ARN to trigger when the alarm state returns to OK"
+  type        = string
+  default     = ""
+}
+
+variable "insufficient_data_action_arn" {
+  description = "ARN to trigger when the alarm state is insufficient data"
+  type        = string
+  default     = ""
+}
