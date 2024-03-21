@@ -31,7 +31,7 @@ module "Alb" {
   alb_security_group = module.glaretram_alb_sg.security_group_id
   acm_certificate_arn = "arn:aws:acm:us-east-2:891377304437:certificate/5c798403-7ac6-4a92-9b48-10dd27c169a4"
   alb_dns_name = "api.aetonix.xyz"
-  alarm_action_arn = "arn:aws:sns:us-east-2:891377304437:Notification"
+  alarm_action_arn = module.staging_sns_topic.sns_topic_arn
 }
 
 ########################################
@@ -91,9 +91,9 @@ module "vasco_redis" {
   instance_name  = "vasco-redis"
   key_name       = module.ssh_key_pair.key_name
   iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
-  alarm_action_arn              = "arn:aws:sns:us-east-2:891377304437:Notification"
-  ok_action_arn                 = "arn:aws:sns:us-east-2:891377304437:Notification"
-  insufficient_data_action_arn  = "arn:aws:sns:us-east-2:891377304437:Notification"
+  alarm_action_arn              = module.staging_sns_topic.sns_topic_arn
+  ok_action_arn                 = module.staging_sns_topic.sns_topic_arn
+  insufficient_data_action_arn  = module.staging_sns_topic.sns_topic_arn
 
   }
 
@@ -105,9 +105,9 @@ module "tupacase" {
   instance_name  = "tupacase"
   key_name       = module.ssh_key_pair.key_name
   iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
-  alarm_action_arn              = "arn:aws:sns:us-east-2:891377304437:Notification"
-  ok_action_arn                 = "arn:aws:sns:us-east-2:891377304437:Notification"
-  insufficient_data_action_arn  = "arn:aws:sns:us-east-2:891377304437:Notification"
+  alarm_action_arn              = module.staging_sns_topic.sns_topic_arn
+  ok_action_arn                 = module.staging_sns_topic.sns_topic_arn
+  insufficient_data_action_arn  = module.staging_sns_topic.sns_topic_arn
 }
 
 module "green_posgress-logs" {
@@ -118,9 +118,9 @@ module "green_posgress-logs" {
   instance_name  = "green-postgress-logs"
   key_name       = module.ssh_key_pair.key_name
   iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
-  alarm_action_arn              = "arn:aws:sns:us-east-2:891377304437:Notification"
-  ok_action_arn                 = "arn:aws:sns:us-east-2:891377304437:Notification"
-  insufficient_data_action_arn  = "arn:aws:sns:us-east-2:891377304437:Notification"
+  alarm_action_arn              = module.staging_sns_topic.sns_topic_arn
+  ok_action_arn                 = module.staging_sns_topic.sns_topic_arn
+  insufficient_data_action_arn  = module.staging_sns_topic.sns_topic_arn
 }
 module "Glaretram_MQTT" {
   source         = "../../modules/ec2_instance"
@@ -130,9 +130,9 @@ module "Glaretram_MQTT" {
   instance_name  = "glaretram_mqtt"
   key_name       = module.ssh_key_pair.key_name
   iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
-  alarm_action_arn              = "arn:aws:sns:us-east-2:891377304437:Notification"
-  ok_action_arn                 = "arn:aws:sns:us-east-2:891377304437:Notification"
-  insufficient_data_action_arn  = "arn:aws:sns:us-east-2:891377304437:Notification"
+  alarm_action_arn              = module.staging_sns_topic.sns_topic_arn
+  ok_action_arn                 = module.staging_sns_topic.sns_topic_arn
+  insufficient_data_action_arn  = module.staging_sns_topic.sns_topic_arn
 }
 module "glaretram" {
   source         = "../../modules/ec2_instance"
@@ -142,9 +142,9 @@ module "glaretram" {
   instance_name  = "glaretram"
   key_name       = module.ssh_key_pair.key_name
   iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
-  alarm_action_arn              = "arn:aws:sns:us-east-2:891377304437:Notification"
-  ok_action_arn                 = "arn:aws:sns:us-east-2:891377304437:Notification"
-  insufficient_data_action_arn  = "arn:aws:sns:us-east-2:891377304437:Notification"
+  alarm_action_arn              = module.staging_sns_topic.sns_topic_arn
+  ok_action_arn                 = module.staging_sns_topic.sns_topic_arn
+  insufficient_data_action_arn  = module.staging_sns_topic.sns_topic_arn
 }
 module "bobones_mongo-replica" {
   source         = "../../modules/ec2_instance"
@@ -154,9 +154,9 @@ module "bobones_mongo-replica" {
   instance_name  = "bobones_mongo_replica"
   key_name       = module.ssh_key_pair.key_name
   iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
-  alarm_action_arn              = "arn:aws:sns:us-east-2:891377304437:Notification"
-  ok_action_arn                 = "arn:aws:sns:us-east-2:891377304437:Notification"
-  insufficient_data_action_arn  = "arn:aws:sns:us-east-2:891377304437:Notification"
+  alarm_action_arn              = module.staging_sns_topic.sns_topic_arn
+  ok_action_arn                 = module.staging_sns_topic.sns_topic_arn
+  insufficient_data_action_arn  = module.staging_sns_topic.sns_topic_arn
 }
 module "mongo_arbiter" {
   source         = "../../modules/ec2_instance"
@@ -166,9 +166,9 @@ module "mongo_arbiter" {
   instance_name  = "mongo_arbiter"
   key_name       = module.ssh_key_pair.key_name
   iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
-  alarm_action_arn              = "arn:aws:sns:us-east-2:891377304437:Notification"
-  ok_action_arn                 = "arn:aws:sns:us-east-2:891377304437:Notification"
-  insufficient_data_action_arn  = "arn:aws:sns:us-east-2:891377304437:Notification"
+  alarm_action_arn              = module.staging_sns_topic.sns_topic_arn
+  ok_action_arn                 = module.staging_sns_topic.sns_topic_arn
+  insufficient_data_action_arn  = module.staging_sns_topic.sns_topic_arn
 }
 module "valize_mongo_replica" {
   source         = "../../modules/ec2_instance"
@@ -178,9 +178,9 @@ module "valize_mongo_replica" {
   instance_name  = "valize_mongo_replica"
   key_name       = module.ssh_key_pair.key_name
   iam_instance_profile_name = module.iam_roles.ssm_instance_profile_name
-  alarm_action_arn              = "arn:aws:sns:us-east-2:891377304437:Notification"
-  ok_action_arn                 = "arn:aws:sns:us-east-2:891377304437:Notification"
-  insufficient_data_action_arn  = "arn:aws:sns:us-east-2:891377304437:Notification"
+  alarm_action_arn              = module.staging_sns_topic.sns_topic_arn
+  ok_action_arn                 = module.staging_sns_topic.sns_topic_arn
+  insufficient_data_action_arn  = module.staging_sns_topic.sns_topic_arn
 }
 
 module "iam_role_for_logs" {
@@ -231,8 +231,6 @@ module "security_group" {
     }
   ]
 }
-
-
 
 
 ########################################
