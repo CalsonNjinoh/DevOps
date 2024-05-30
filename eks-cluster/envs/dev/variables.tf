@@ -1,6 +1,13 @@
 variable "env" {
   description = "Static Environment names and default tags"
   default = {
+    "default" = {
+      name = "Default"
+      tags = {
+        Type        = "Default"
+        Environment = "Default"
+      }
+    }
     "staging" = {
       name = "Staging"
       tags = {
@@ -31,11 +38,13 @@ variable "vpcs" {
   type        = map(string)
   description = "VPC IDs"
   default = {
-    prod    = ""
-    dev     = ""
-    staging = ""
+    "default" = "vpc-default-id"
+    "prod"    = "vpc-prod-id"
+    "dev"     = "vpc-dev-id"
+    "staging" = "vpc-staging-id"
   }
 }
+
 variable "vpc_cidr" {
   description = "VPC CIDR range"
   default     = "10.197.0.0/16"
@@ -54,7 +63,6 @@ variable "subnet_list" {
       cidr = "10.197.128.0/24"
       type = "private"
     },
-
     {
       name = "public-subnet-1"
       cidr = "10.197.0.0/24"
@@ -77,11 +85,17 @@ variable "es_subnets" {
 variable "ec2_ssh_key_name" {
   type        = string
   description = "Name of the ssh keypair that will be assigned to EC2 worker nodes"
+  default     = "bastion"
 }
 
 variable "scaling_configuration" {
   type        = map(number)
   description = "Scaling configurations that need to be passed to auto-scaling group which creates worker nodes"
+  default = {
+    min_size     = 1
+    desired_size = 2
+    max_size     = 3
+  }
 }
 
 variable "instance_type" {
@@ -97,9 +111,8 @@ variable "es_instance_type" {
 variable "region" {
   type        = string
   description = "Name of the region in which cluster need to be created"
-  default     = "us-east-2"
+  default     = "ca-central-1"
 }
-
 
 variable "ebs_namespace" {
   type        = string
@@ -132,8 +145,9 @@ variable "secret_manager_role_name" {
 }
 
 variable "azs" {
-  description = "availablity zones"
+  description = "Availability zones"
   type        = list(string)
+  default     = ["us-east-2a", "us-east-2b", "us-east-2c"]
 }
 
 variable "external_dns_role_name" {
@@ -187,39 +201,26 @@ variable "aws_fluentbit_sa_name" {
 variable "aws_key" {
   description = "AWS KEY"
   type        = string
+  default     = "default-aws-key"
 }
 
 variable "aws_secret" {
   description = "AWS Secret"
   type        = string
+  default     = "default-aws-secret"
 }
 
 variable "zone_id" {
   description = "The Zone ID to deploy to"
-  default     = ""
+  default     = "default-zone-id"
 }
 
 variable "root_domain" {
   description = "The root domain"
-  default     = ""
+  default     = "default-root-domain"
 }
 
 variable "aws_auth_users" {
   description = "users"
-  default     = ""
+  default     = []
 }
-
-# variable "mongo_uri" {
-#   description = "MongoDB URI"
-# }
-
-# variable "backup_interval" {
-#   description = "Backup interval in minutes"
-#   default     = 1440
-# }
-
-
-
-
-
-
