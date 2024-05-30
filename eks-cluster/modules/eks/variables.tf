@@ -49,3 +49,11 @@ variable "aws_auth_users" {
   type        = list(any)
   default     = []
 }
+variable "cluster_role_arn" {
+  description = "The ARN of the IAM role to associate with the EKS cluster"
+  type        = string
+}
+variable "security_group_id" {
+  description = "The ID of the security group to use for the EKS cluster"
+  type        = string
+}

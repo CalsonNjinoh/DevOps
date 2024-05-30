@@ -1,4 +1,4 @@
-resource "aws_security_group" "eks-sg" {
+resource "aws_security_group" "eks_sg" {
   name        = "${var.cluster_name}-eks-sg"
   description = "EKS Security group"
   vpc_id      = var.vpc_id
@@ -24,7 +24,7 @@ resource "aws_security_group" "eks-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    description = "mongo access"
+    description = "Mongo access"
     from_port   = 27017
     to_port     = 27017
     protocol    = "tcp"
@@ -34,7 +34,7 @@ resource "aws_security_group" "eks-sg" {
   egress {
     from_port        = 0
     to_port          = 0
-    protocol         = "-1"
+    protocol         = -1
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }

@@ -1,5 +1,4 @@
-output "additional_securitygroup" {
-  value       = aws_security_group.eks-sg.id
-  description = "EKS additional security group that allows requests from worker nodes"
+output "security_group_id" {
+  value       = aws_security_group.eks_sg.id
+  description = "EKS security group that allows requests from worker nodes"
 }
-
