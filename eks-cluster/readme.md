@@ -67,3 +67,61 @@
 | `helm plugin install <plugin_url>` | Install a Helm plugin from a URL. |
 
 
+# NGINX Ingress Controller Deployment
+
+1. **Add the NGINX Helm repository**:
+    ```bash
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    ```
+
+2. **Update the Helm repositories**:
+    ```bash
+    helm repo update
+    ```
+
+3. **Install the NGINX Ingress Controller**:
+    ```bash
+    helm install nginx-ingress ingress-nginx/ingress-nginx
+    ```
+
+4. **Verify the installation**:
+    ```bash
+    kubectl get pods -n default -l app.kubernetes.io/name=ingress-nginx
+    ```
+
+5. **Get the Ingress Controller's external IP**:
+    ```bash
+    kubectl get services -o wide -w -n default -l app.kubernetes.io/name=ingress-nginx
+    ```
+
+### Application Deployment Using Manifest Files
+
+1. **Create a namespace (if needed)**:
+    ```bash
+    kubectl create namespace <namespace>
+    ```
+
+2. **Apply the manifest files**:
+    ```bash
+    kubectl apply -f <manifest-file-1.yaml> -n <namespace>
+    kubectl apply -f <manifest-file-2.yaml> -n <namespace>
+    # Repeat for other manifest files as needed
+    ```
+
+3. **Check the status of the deployment**:
+    ```bash
+    kubectl get deployments -n <namespace>
+    ```
+
+4. **Check the pods to ensure they are running**:
+    ```bash
+    kubectl get pods -n <namespace>
+    ```
+
+5. **Describe the deployed resources (optional for debugging)**:
+    ```bash
+    kubectl describe deployment <deployment_name> -n <namespace>
+    kubectl describe pod <pod_name> -n <namespace>
+    ```
+
+Replace `<namespace>`, `<manifest-file-1.yaml>`, `<manifest-file-2.yaml>`, `<deployment_name>`, and `<pod_name>` with your actual namespace, manifest file names, deployment name, and pod name respectively. This setup covers the process of deploying NGINX Ingress Controllers using Helm and deploying an application using Kubernetes manifest files.
