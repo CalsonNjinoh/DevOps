@@ -1,4 +1,4 @@
-Kubernetes Commands Cheat Sheet
+**Kubernetes Commands Cheat Sheet**
 
 | **Command** | **Usage** |
 |-------------|------------|
@@ -34,7 +34,7 @@ Kubernetes Commands Cheat Sheet
 | `kubectl get events` | List all events in the default namespace. |
 
 
-Helm Cheat Sheat
+**Helm Cheat Sheat**
 
 | **Command** | **Usage** |
 |-------------|-----------|
