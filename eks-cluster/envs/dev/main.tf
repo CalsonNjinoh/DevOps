@@ -62,6 +62,13 @@ module "eks" {
   security_group_id     = module.eks_security_group.security_group_id
   tags                  = local.tags
 }
+/*depends_on = [
+    module.vpc,
+    module.iam_cluster_roles,
+    module.eks_security_group,
+    module.node_group  # Ensure node_group is destroyed before the EKS cluster
+  ]
+}*/
 
 module "node_group" {
   source                = "../../modules/node_group/"
@@ -75,6 +82,8 @@ module "node_group" {
   vpc_id                = module.vpc.vpc_id
   tags                  = local.tags
   node_role_arn         = module.iam_node_roles.node_role_arn
+
+  depends_on = [module.eks]
 }
 
 data "aws_eks_cluster" "eks" {
