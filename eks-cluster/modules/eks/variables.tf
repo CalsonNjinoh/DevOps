@@ -1,6 +1,7 @@
 variable "cluster_name" {
   type        = string
   description = "Name of the cluster for which nodes should be created"
+  default = "Development"
 }
 
 variable "vpc_id" {

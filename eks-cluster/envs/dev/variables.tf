@@ -224,3 +224,9 @@ variable "aws_auth_users" {
   description = "users"
   default     = []
 }
+
+variable "cluster_name" {
+  description = "The name of the cluster"
+  type        = string
+  default     = "development"  
+}
