@@ -85,7 +85,7 @@ variable "es_subnets" {
 variable "ec2_ssh_key_name" {
   type        = string
   description = "Name of the ssh keypair that will be assigned to EC2 worker nodes"
-  default     = "bastion"
+  default     = "Chandler RSA"
 }
 
 variable "scaling_configuration" {
@@ -100,7 +100,7 @@ variable "scaling_configuration" {
 
 variable "instance_type" {
   description = "EKS instance types"
-  default     = "t3.medium"
+  default     = "t4g.medium"
 }
 
 variable "es_instance_type" {
@@ -228,5 +228,5 @@ variable "aws_auth_users" {
 variable "cluster_name" {
   description = "The name of the cluster"
   type        = string
-  default     = "development"  
+  default     = "development-cluster"  
 }
