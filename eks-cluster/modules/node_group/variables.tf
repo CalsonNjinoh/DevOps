@@ -11,6 +11,7 @@ variable "subnet_ids" {
 variable "instance_types" {
   description = "List of EC2 instance types for the EKS node group"
   type        = list(string)
+  default = [ "t4g.medium" ]
 }
 
 variable "scaling_configuration" {
@@ -53,4 +54,10 @@ variable "region" {
 variable "vpc_id" {
   description = "VPC ID where the EKS cluster and node group are deployed"
   type        = string
+}
+
+variable "environment" {
+  description = "Environment for EKS Cluster"
+  type        = string
+  
 }
