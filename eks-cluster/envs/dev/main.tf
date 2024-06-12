@@ -2,6 +2,17 @@ provider "aws" {
   region = var.region
 }
 
+terraform {
+  backend "s3" {
+    bucket = "ekstf-statefile-backup"
+    key    = "development/terraform.tfstate"
+    region = "ca-central-1"
+    encrypt = true
+    //dynamodb_table = "terraform-lock-table"
+    //role_arn = "arn:aws:iam::338674575706:role/Cross-Account-S3-TF"
+  }
+}
+
 provider "kubernetes" {
   config_path = "~/.kube/config"
 }
@@ -102,6 +113,7 @@ module "node_group" {
   region                = var.region
   vpc_id                = module.vpc.vpc_id
   tags                  = local.tags
+  environment           = local.workspace
   node_role_arn         = module.iam_node_roles.node_role_arn
 
   depends_on = [module.eks]
