@@ -125,3 +125,71 @@
     ```
 
 Replace `<namespace>`, `<manifest-file-1.yaml>`, `<manifest-file-2.yaml>`, `<deployment_name>`, and `<pod_name>` with your actual namespace, manifest file names, deployment name, and pod name respectively. This setup covers the process of deploying NGINX Ingress Controllers using Helm and deploying an application using Kubernetes manifest files.
+
+
+##########################################
+
+Sure, here's how you can structure your Confluence documentation:
+
+---
+
+# Setting Up Secrets Management in Kubernetes with AWS Secrets Manager and CSI Driver
+
+## Step 1: Create a Secret Manager to Store Your Secrets
+
+In AWS, use the Secrets Manager service to create and manage your secrets. These secrets can be database credentials, on-premises resource credentials, SaaS application credentials, third-party API keys, and even Secure Shell (SSH) keys.
+
+## Step 2: Install CSI Drivers
+
+To install the Secrets Store CSI Driver, use Helm, the package manager for Kubernetes. Run the following commands:
+
+```bash
+helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace kube-system
+```
+
+For more information, visit the [official installation guide](https://secrets-store-csi-driver.sigs.k8s.io/getting-started/installation).
+
+To verify the installation, run:
+
+```bash
+kubectl get crd -n kube-system
+```
+
+## Step 3: Set Up Integration with AWS Secrets and CSI Driver
+
+Follow the instructions on the [official GitHub repository](https://github.com/aws/secrets-store-csi-driver-provider-aws) to set up the integration. Run the following command:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
+```
+
+## Step 4: Create an IAM Policy
+
+Create an IAM policy in AWS with Secrets Manager actions (describe and get secret value).
+
+## Step 5: Associate IAM OIDC Provider
+
+Run the following command, replacing the region and cluster name with your own:
+
+```bash
+eksctl utils associate-iam-oidc-provider --region=ca-central-1 --cluster=development-cluster --approve
+```
+
+## Step 6: Create IAM Service Account
+
+Run the following command, replacing the region, cluster name, and policy ARN with your own:
+
+```bash
+eksctl create iamserviceaccount --name api-sa --region=ca-central-1 --cluster development-cluster --attach-policy-arn arn:aws:iam::973334513903:policy/Dev-Secrets-Read  --approve --override-existing-serviceaccounts
+```
+
+## Step 7: Deploy Your Application
+
+Now that your secrets management setup is complete, you can deploy your application to your Kubernetes cluster.
+
+---
+
+Remember to replace placeholders with your actual values where necessary.
+
+
