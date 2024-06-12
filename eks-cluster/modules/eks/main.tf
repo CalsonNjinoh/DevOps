@@ -15,7 +15,7 @@ resource "aws_eks_cluster" "eks-cluster" {
 
 
   /*kubernetes_network_config {
-    ip_family = "ipv4"
+    ip_family = "ipv6"
   }
 }*/
 
