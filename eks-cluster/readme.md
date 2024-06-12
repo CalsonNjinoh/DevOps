@@ -129,9 +129,7 @@ Replace `<namespace>`, `<manifest-file-1.yaml>`, `<manifest-file-2.yaml>`, `<dep
 
 ##########################################
 
-Sure, here's how you can structure your Confluence documentation:
 
----
 
 # Setting Up Secrets Management in Kubernetes with AWS Secrets Manager and CSI Driver
 
