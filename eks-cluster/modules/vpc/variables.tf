@@ -1,19 +1,19 @@
 variable "name" {
   type        = string
   description = "name"
-  default = ""
+  default     = ""
 }
+
 variable "vpc_id" {
   type        = string
   description = "VPC ID"
-  default = ""
+  default     = ""
 }
 
 variable "vpc_cidr" {
   type        = string
   description = "VPC CIDR range"
 }
-
 
 variable "tags" {
   type        = map(string)
@@ -43,11 +43,8 @@ variable "private_routetable_name" {
   description = "Enter private_route_table tag name"
 }
 
-
 variable "azs" {
   description = "Availability Zone"
   type        = list(string)
   default     = []
 }
-
-
