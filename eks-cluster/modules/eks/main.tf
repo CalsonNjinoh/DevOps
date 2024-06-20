@@ -1,26 +1,30 @@
 resource "aws_eks_cluster" "eks-cluster" {
   name     = var.cluster_name
-  role_arn = aws_iam_role.eks-role.arn
+  role_arn = var.cluster_role_arn
+  version = "1.30"
 
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   vpc_config {
     subnet_ids         = var.eks_subnets
-    security_group_ids = [aws_security_group.eks-sg.id]
-    endpoint_public_access  = false
-    endpoint_private_access = true
+    security_group_ids = [var.security_group_id]
+    endpoint_public_access  = true
+    endpoint_private_access = false
+    public_access_cidrs     = ["0.0.0.0/0"]
   }
 
-  kubernetes_network_config {
+
+  /*kubernetes_network_config {
     ip_family = "ipv6"
   }
+}*/
 
-  depends_on = [
-    aws_iam_role_policy_attachment.eks-cluster-policy,
-    aws_iam_role_policy_attachment.eks-cluster-policy-2,
-  ]
-  provisioner "local-exec" {
-    command = "aws eks --region ${var.region} update-kubeconfig --name ${var.cluster_name}"
-  }
+  //depends_on = [
+    //aws_iam_role_policy_attachment.eks-cluster-policy,
+    //aws_iam_role_policy_attachment.eks-cluster-policy-2,
+  //]
 }
-
+  
+   #provisioner "local-exec" {
+    #command = "aws eks --region ${var.region} wait cluster-active --name ${var.cluster_name} && aws eks --region ${var.region} update-kubeconfig --name ${var.cluster_name}"
+  #}
