@@ -1,6 +1,7 @@
 variable "cluster_name" {
   type        = string
   description = "Name of the cluster for which nodes should be created"
+  default = "Development-cluster"
 }
 
 variable "vpc_id" {
@@ -48,4 +49,12 @@ variable "aws_auth_users" {
   description = "List of user maps to add to the aws-auth configmap"
   type        = list(any)
   default     = []
+}
+variable "cluster_role_arn" {
+  description = "The ARN of the IAM role to associate with the EKS cluster"
+  type        = string
+}
+variable "security_group_id" {
+  description = "The ID of the security group to use for the EKS cluster"
+  type        = string
 }
