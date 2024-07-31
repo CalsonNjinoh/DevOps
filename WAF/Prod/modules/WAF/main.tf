@@ -169,6 +169,50 @@ resource "aws_wafv2_web_acl" "this" {
     }
   }
 
+  rule {
+    name     = "Files"
+    priority = lookup(var.rule_priorities[each.key], "Files", 5)
+
+    action {
+      block {}
+    }
+
+    statement {
+      and_statement {
+        statement {
+          not_statement {
+            statement {
+              geo_match_statement {
+                country_codes = ["CA"]
+              }
+            }
+          }
+        }
+        statement {
+          byte_match_statement {
+            field_to_match {
+              single_header {
+                name = "host"
+              }
+            }
+            positional_constraint = "EXACTLY"
+            search_string         = "files.aetonix.xyz"
+            text_transformation {
+              priority = 0
+              type     = "NONE"
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "Files"
+      sampled_requests_enabled   = true
+    }
+  }
+
   visibility_config {
     cloudwatch_metrics_enabled = true
     metric_name                = "waf-${each.key}-${var.environment}"
