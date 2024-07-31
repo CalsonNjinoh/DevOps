@@ -1,7 +1,7 @@
 resource "aws_wafv2_ip_set" "whitelist" {
   for_each = toset(var.regions)
   name     = "${each.key}-whitelist"
-  scope    = "REGIONAL"
+  scope    = var.scope
   ip_address_version = "IPV4"
   addresses = lookup(var.whitelist_ip_addresses, each.key, [])
 }
@@ -9,7 +9,7 @@ resource "aws_wafv2_ip_set" "whitelist" {
 resource "aws_wafv2_ip_set" "blacklist" {
   for_each = toset(var.regions)
   name     = "${each.key}-blacklist"
-  scope    = "REGIONAL"
+  scope    = var.scope
   ip_address_version = "IPV4"
   addresses = lookup(var.blacklist_ip_addresses, each.key, [])
 }
@@ -18,8 +18,8 @@ resource "aws_wafv2_web_acl" "this" {
   for_each = toset(var.regions)
 
   name        = "waf-${each.key}-${var.environment}"
-  scope       = "REGIONAL"
-  description = "WAF_for_test_ALB_in_${each.key}_${var.environment}"
+  scope       = var.scope
+  description = "WAF_${each.key}_${var.environment}"
 
   default_action {
     allow {}
@@ -29,7 +29,7 @@ resource "aws_wafv2_web_acl" "this" {
     for_each = var.create_whitelist_rule[each.key] ? [1] : []
     content {
       name     = "WhitelistRule"
-      priority = 0
+      priority = lookup(var.rule_priorities[each.key], "WhitelistRule", 0)
 
       action {
         allow {}
@@ -53,7 +53,7 @@ resource "aws_wafv2_web_acl" "this" {
     for_each = var.create_blacklist_rule[each.key] ? [1] : []
     content {
       name     = "BlacklistRule"
-      priority = 1
+      priority = lookup(var.rule_priorities[each.key], "BlacklistRule", 1)
 
       action {
         block {}
@@ -75,7 +75,7 @@ resource "aws_wafv2_web_acl" "this" {
 
   rule {
     name     = "AWSManagedRulesAmazonIpReputationList"
-    priority = 2
+    priority = lookup(var.rule_priorities[each.key], "AWSManagedRulesAmazonIpReputationList", 2)
 
     override_action {
       none {}
@@ -97,7 +97,7 @@ resource "aws_wafv2_web_acl" "this" {
 
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
-    priority = 3
+    priority = lookup(var.rule_priorities[each.key], "AWSManagedRulesCommonRuleSet", 3)
 
     override_action {
       none {}
@@ -107,6 +107,27 @@ resource "aws_wafv2_web_acl" "this" {
       managed_rule_group_statement {
         vendor_name = "AWS"
         name        = "AWSManagedRulesCommonRuleSet"
+
+        rule_action_override {
+          name = "NoUserAgent_HEADER"
+          action_to_use {
+            allow {}
+          }
+        }
+
+        rule_action_override {
+          name = "SizeRestrictions_QUERYSTRING"
+          action_to_use {
+            allow {}
+          }
+        }
+
+        rule_action_override {
+          name = "SizeRestrictions_BODY"
+          action_to_use {
+            allow {}
+          }
+        }
       }
     }
 
@@ -119,10 +140,10 @@ resource "aws_wafv2_web_acl" "this" {
 
   rule {
     name     = "SizeRestrictions_BODY"
-    priority = 4
+    priority = lookup(var.rule_priorities[each.key], "SizeRestrictions_BODY", 4)
 
     action {
-      block {}
+      allow {}
     }
 
     statement {
@@ -131,7 +152,7 @@ resource "aws_wafv2_web_acl" "this" {
         size                = 0
         field_to_match {
           single_header {
-            name = "sizerestrictions_body"
+            name = "size_restrictions_body"
           }
         }
         text_transformation {
