@@ -5,6 +5,7 @@ provider "aws" {
 module "waf" {
   source      = "../../modules/WAF"
   name        = var.name
+  scope = "REGIONAL"
   description = "IP_set_for_blacklisted_IPs_in_ca-central-1"
   rules       = var.rules
   alb_arn     = var.alb_arn
