@@ -69,3 +69,40 @@ variable "whitelist_ip_addresses" {
 variable "blacklist_ip_addresses" {
   type = map(list(string))
 }
+
+variable "scope" {
+  description = "Scope of the WAF"
+  type        = string
+  
+}
+
+variable "rule_priorities" {
+  description = "Map of rule priorities for each region"
+  type        = map(map(number))
+  default     = {
+    "ca-central-1" = {
+      SizeRestrictions_BODY                 = 0
+      WhitelistRule                         = 1
+      AWSManagedRulesCommonRuleSet          = 4
+      BlacklistRule                         = 5
+      AWSManagedRulesAmazonIpReputationList = 6
+       
+    }
+    "us-east-1" = {
+      SizeRestrictions_BODY                 = 0
+      AWSManagedRulesCommonRuleSet          = 1
+      AWSManagedRulesAmazonIpReputationList = 2
+      WhitelistRule                         = 3
+      BlacklistRule                         = 4
+      
+     
+    }
+    "eu-west-2" = {
+      SizeRestrictions_BODY                 = 0
+      AWSManagedRulesCommonRuleSet          = 1
+      AWSManagedRulesAmazonIpReputationList = 2
+      WhitelistRule                         = 4
+      BlacklistRule                         = 3
+    }
+  }
+}
