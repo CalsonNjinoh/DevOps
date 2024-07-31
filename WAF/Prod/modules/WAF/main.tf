@@ -127,10 +127,12 @@ resource "aws_wafv2_web_acl" "this" {
 
     statement {
       size_constraint_statement {
-        comparison_operator = "GT"
-        size                = 1024
+        comparison_operator = "GE"
+        size                = 0
         field_to_match {
-          body {}
+          single_header {
+            name = "sizerestrictions_body"
+          }
         }
         text_transformation {
           priority = 0
