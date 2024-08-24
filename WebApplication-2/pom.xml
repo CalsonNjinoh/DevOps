@@ -71,7 +71,7 @@
        <snapshotRepository>-->
            <id>snapshotNexus</id>-->
             <name>snapshot nexus</name>-->
-            <url>nexus.team4techsolutionsinc.com/repository/team4techsolutions-snapshots</url>-->
+            <url>https://nexus.team4techsolutionsinc.com/repository/team4techsolutions-snapshots</url>-->
         </snapshotRepository>-->
 
     <repository>-->
