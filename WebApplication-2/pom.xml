@@ -67,20 +67,19 @@
     </properties>
 
 
-   <distributionManagement>-->
-       <snapshotRepository>-->
-           <id>snapshotNexus</id>-->
-            <name>snapshot nexus</name>-->
-            <url>https://nexus.team4techsolutionsinc.com/repository/team4techsolutions-snapshots</url>-->
-        </snapshotRepository>-->
+    <distributionManagement>
+        <snapshotRepository>
+            <id>snapshotNexus</id>
+            <name>snapshot nexus</name>
+            <url>https://nexus.team4techsolutionsinc.com/repository/team4techsolutions-snapshots</url>
+        </snapshotRepository>
 
-    <repository>-->
-        <id>nexus-releases</id>-->
-        <name>release nexus</name>-->
-        <url>https://nexus.team4techsolutionsinc.com/repository/team4tech-releases/</url>-->
-    </repository>-->
-
-    </distributionManagement>-->
+    <repository>
+            <id>nexus-releases</id>
+            <name>release nexus</name>
+            <url>https://nexus.team4techsolutionsinc.com/repository/team4tech-releases/</url>
+        </repository>
+    </distributionManagement>
 
 
 </project>
