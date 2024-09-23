@@ -1,19 +1,14 @@
-#######################################################
-# Default Security Group
-#######################################################
-
 resource "aws_default_security_group" "default" {
+  count  = var.create_default_sg ? 1 : 0
   vpc_id = var.vpc_id
 
   ingress = []
   egress  = []
 }
 
-#######################################################
-# Redis
-#######################################################
 
 resource "aws_security_group" "redis" {
+  count       = var.create_redis_sg ? 1 : 0
   name        = "Redis"
   description = "Allow access to redis"
   vpc_id      = var.vpc_id
@@ -24,38 +19,42 @@ resource "aws_security_group" "redis" {
 }
 
 resource "aws_security_group_rule" "redis-vpc" {
+  count             = var.create_redis_sg ? 1 : 0
   type              = "ingress"
   from_port         = 6168
   to_port           = 6168
   protocol          = "tcp"
-  security_group_id = aws_security_group.redis.id
+  security_group_id = aws_security_group.redis[0].id
   cidr_blocks       = [var.vpc_cidr]
 }
 
 resource "aws_security_group_rule" "redis-backups" {
+  count             = var.create_redis_sg ? 1 : 0
   type              = "ingress"
   from_port         = 6169
   to_port           = 6169
   protocol          = "tcp"
-  security_group_id = aws_security_group.redis.id
+  security_group_id = aws_security_group.redis[0].id
   cidr_blocks       = ["${var.backup_private_ip}/32"]
 }
 
 resource "aws_security_group_rule" "redis-vpn" {
-  type                     = "ingress"
-  from_port                = 6169
-  to_port                  = 6169
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.redis.id
-  source_security_group_id = aws_security_group.vpn.id
-
+  count                     = var.create_redis_sg ? 1 : 0
+  type                      = "ingress"
+  from_port                 = 6169
+  to_port                   = 6169
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.redis[0].id
+  source_security_group_id  = aws_security_group.vpn[0].id
 }
+
 
 #######################################################
 # MQTT
 #######################################################
 
 resource "aws_security_group" "mqtt" {
+  count       = var.create_mqtt_sg ? 1 : 0
   name        = "MQTT"
   description = "Allow access to MQTT"
   vpc_id      = var.vpc_id
@@ -66,27 +65,32 @@ resource "aws_security_group" "mqtt" {
 }
 
 resource "aws_security_group_rule" "mqtt-vpc" {
+  count             = var.create_mqtt_sg ? 1 : 0
   type              = "ingress"
   from_port         = 2616
   to_port           = 2616
   protocol          = "tcp"
-  security_group_id = aws_security_group.mqtt.id
+  security_group_id = aws_security_group.mqtt[0].id
   cidr_blocks       = [var.vpc_cidr]
 }
+
 resource "aws_security_group_rule" "mqtt-vpn" {
-  type                     = "ingress"
-  from_port                = 1616
-  to_port                  = 1616
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.mqtt.id
-  source_security_group_id = aws_security_group.vpn.id
+  count                     = var.create_mqtt_sg ? 1 : 0
+  type                      = "ingress"
+  from_port                 = 1616
+  to_port                   = 1616
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.mqtt[0].id
+  source_security_group_id  = aws_security_group.vpn[0].id
 }
+
 
 #######################################################
 # Elephants
 #######################################################
 
 resource "aws_security_group" "elephants" {
+  count       = var.create_elephants_sg ? 1 : 0
   name        = "Elephants"
   description = "Allow access to elephants"
   vpc_id      = var.vpc_id
@@ -97,20 +101,22 @@ resource "aws_security_group" "elephants" {
 }
 
 resource "aws_security_group_rule" "elephants-in" {
+  count             = var.create_elephants_sg ? 1 : 0
   type              = "ingress"
   from_port         = 43616
   to_port           = 43616
   protocol          = "tcp"
-  security_group_id = aws_security_group.elephants.id
+  security_group_id = aws_security_group.elephants[0].id
   cidr_blocks       = [var.vpc_cidr]
 }
 
 resource "aws_security_group_rule" "elephants-out" {
+  count             = var.create_elephants_sg ? 1 : 0
   type              = "egress"
   from_port         = 43616
   to_port           = 43616
   protocol          = "tcp"
-  security_group_id = aws_security_group.elephants.id
+  security_group_id = aws_security_group.elephants[0].id
   cidr_blocks       = [var.vpc_cidr]
 }
 
@@ -119,6 +125,7 @@ resource "aws_security_group_rule" "elephants-out" {
 #######################################################
 
 resource "aws_security_group" "nginx" {
+  count       = var.create_nginx_sg ? 1 : 0
   name        = "Nginx"
   description = "Allow access to Nginx"
   vpc_id      = var.vpc_id
@@ -129,19 +136,22 @@ resource "aws_security_group" "nginx" {
 }
 
 resource "aws_security_group_rule" "nginx-alb" {
-  type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.nginx.id
-  source_security_group_id = aws_security_group.alb.id
+  count                     = var.create_nginx_sg ? 1 : 0
+  type                      = "ingress"
+  from_port                 = 80
+  to_port                   = 80
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.nginx[0].id
+  source_security_group_id  = aws_security_group.alb[0].id
 }
+
 
 #######################################################
 # Registration Server
 #######################################################
 
 resource "aws_security_group" "registration_server" {
+  count       = var.create_registration_server_sg ? 1 : 0
   name        = "Registration Server"
   description = "Allow access to Registration Server"
   vpc_id      = var.vpc_id
@@ -152,19 +162,22 @@ resource "aws_security_group" "registration_server" {
 }
 
 resource "aws_security_group_rule" "registration_server_alb" {
-  type                     = "ingress"
-  from_port                = 56433
-  to_port                  = 56433
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.registration_server.id
-  source_security_group_id = aws_security_group.alb.id
+  count                     = var.create_registration_server_sg ? 1 : 0
+  type                      = "ingress"
+  from_port                 = 56433
+  to_port                   = 56433
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.registration_server[0].id
+  source_security_group_id  = aws_security_group.alb[0].id
 }
+
 
 #######################################################
 # SSH
 #######################################################
 
 resource "aws_security_group" "ssh" {
+  count       = var.create_ssh_sg ? 1 : 0
   name        = "SSH"
   description = "Allow access to SSH"
   vpc_id      = var.vpc_id
@@ -188,12 +201,13 @@ resource "aws_security_group" "ssh" {
 }
 
 resource "aws_security_group_rule" "ssh" {
-  type                     = "ingress"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.ssh.id
-  source_security_group_id = aws_security_group.vpn.id
+  count                     = var.create_ssh_sg ? 1 : 0
+  type                      = "ingress"
+  from_port                 = 22
+  to_port                   = 22
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.ssh[0].id
+  source_security_group_id  = aws_security_group.vpn[0].id
 }
 
 #######################################################
@@ -201,6 +215,7 @@ resource "aws_security_group_rule" "ssh" {
 #######################################################
 
 resource "aws_security_group" "api" {
+  count       = var.create_api_sg ? 1 : 0
   name        = "API"
   description = "Allow access to API"
   vpc_id      = var.vpc_id
@@ -218,12 +233,14 @@ resource "aws_security_group" "api" {
     protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
   }
+
   egress {
     from_port   = 2616
     to_port     = 2616
     protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
   }
+
   egress {
     from_port   = 43616
     to_port     = 43616
@@ -244,12 +261,13 @@ resource "aws_security_group" "api" {
 }
 
 resource "aws_security_group_rule" "api-alb" {
-  type                     = "ingress"
-  from_port                = 21899
-  to_port                  = 21899
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.api.id
-  source_security_group_id = aws_security_group.alb.id
+  count             = var.create_api_sg ? 1 : 0
+  type              = "ingress"
+  from_port         = 21899
+  to_port           = 21899
+  protocol          = "tcp"
+  security_group_id = aws_security_group.api[0].id
+  source_security_group_id = aws_security_group.alb[0].id
 }
 
 #######################################################
@@ -257,9 +275,11 @@ resource "aws_security_group_rule" "api-alb" {
 #######################################################
 
 resource "aws_security_group" "alb" {
+  count       = var.create_alb_sg ? 1 : 0
   name        = "ALB"
   description = "Allow access to ALB"
   vpc_id      = var.vpc_id
+
   ingress {
     from_port        = 80
     to_port          = 80
@@ -267,6 +287,7 @@ resource "aws_security_group" "alb" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
+
   ingress {
     from_port        = 443
     to_port          = 443
@@ -281,30 +302,33 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_security_group_rule" "alb-api" {
-  type                     = "egress"
-  from_port                = 21899
-  to_port                  = 21899
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.alb.id
-  source_security_group_id = aws_security_group.api.id
+  count             = var.create_alb_sg ? 1 : 0
+  type              = "egress"
+  from_port         = 21899
+  to_port           = 21899
+  protocol          = "tcp"
+  security_group_id = aws_security_group.alb[0].id
+  source_security_group_id = aws_security_group.api[0].id
 }
 
 resource "aws_security_group_rule" "alb-registration" {
-  type                     = "egress"
-  from_port                = 56433
-  to_port                  = 56433
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.alb.id
-  source_security_group_id = aws_security_group.registration_server.id
+  count             = var.create_alb_sg ? 1 : 0
+  type              = "egress"
+  from_port         = 56433
+  to_port           = 56433
+  protocol          = "tcp"
+  security_group_id = aws_security_group.alb[0].id
+  source_security_group_id = aws_security_group.registration_server[0].id
 }
 
 resource "aws_security_group_rule" "alb-files" {
-  type                     = "egress"
-  from_port                = 80
-  to_port                  = 80
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.alb.id
-  source_security_group_id = aws_security_group.nginx.id
+  count             = var.create_alb_sg ? 1 : 0
+  type              = "egress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  security_group_id = aws_security_group.alb[0].id
+  source_security_group_id = aws_security_group.nginx[0].id
 }
 
 
@@ -313,6 +337,7 @@ resource "aws_security_group_rule" "alb-files" {
 #######################################################
 
 resource "aws_security_group" "backups" {
+  count       = var.create_backups_sg ? 1 : 0
   name        = "Backups"
   description = "Allow access to Backups"
   vpc_id      = var.vpc_id
@@ -329,11 +354,13 @@ resource "aws_security_group" "backups" {
   }, var.tags)
 }
 
+
 #######################################################
 # VPN
 #######################################################
 
 resource "aws_security_group" "vpn" {
+  count       = var.create_vpn_sg ? 1 : 0
   name        = "VPN"
   description = "Allow access to VPN"
   vpc_id      = var.vpc_id
@@ -344,51 +371,55 @@ resource "aws_security_group" "vpn" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
 
 resource "aws_security_group_rule" "vpn-redis" {
-  type                     = "egress"
-  from_port                = 6169
-  to_port                  = 6169
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.vpn.id
-  source_security_group_id = aws_security_group.redis.id
+  count                     = var.create_vpn_sg ? 1 : 0
+  type                      = "egress"
+  from_port                 = 6169
+  to_port                   = 6169
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.vpn[0].id
+  source_security_group_id  = aws_security_group.redis[0].id
 }
 
 resource "aws_security_group_rule" "vpn-ssh" {
+  count             = var.create_vpn_sg ? 1 : 0
   type              = "egress"
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
   cidr_blocks       = [var.vpc_cidr]
-  security_group_id = aws_security_group.vpn.id
+  security_group_id = aws_security_group.vpn[0].id
 }
 
 resource "aws_security_group_rule" "vpn-mqtt" {
-  type                     = "egress"
-  from_port                = 1616
-  to_port                  = 1616
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.vpn.id
-  source_security_group_id = aws_security_group.mqtt.id
+  count                     = var.create_vpn_sg ? 1 : 0
+  type                      = "egress"
+  from_port                 = 1616
+  to_port                   = 1616
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.vpn[0].id
+  source_security_group_id  = aws_security_group.mqtt[0].id
 }
 
 resource "aws_security_group_rule" "vpn-postgres" {
+  count             = var.create_vpn_sg ? 1 : 0
   type              = "egress"
   from_port         = 5432
   to_port           = 5432
   protocol          = "tcp"
-  security_group_id = aws_security_group.vpn.id
+  security_group_id = aws_security_group.vpn[0].id
   cidr_blocks       = [var.vpc_cidr]
 }
 
 resource "aws_security_group_rule" "vpn-opensearch" {
-  type                     = "egress"
-  from_port                = 443
-  to_port                  = 443
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.vpn.id
-  source_security_group_id = aws_security_group.opensearch.id
+  count                     = var.create_vpn_sg ? 1 : 0
+  type                      = "egress"
+  from_port                 = 443
+  to_port                   = 443
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.vpn[0].id
+  source_security_group_id  = aws_security_group.opensearch[0].id
 }
 
 #######################################################
@@ -396,6 +427,7 @@ resource "aws_security_group_rule" "vpn-opensearch" {
 #######################################################
 
 resource "aws_security_group" "opensearch" {
+  count       = var.create_opensearch_sg ? 1 : 0
   name        = "OpenSearch"
   description = "Allow access to OpenSearch"
   vpc_id      = var.vpc_id
@@ -406,49 +438,55 @@ resource "aws_security_group" "opensearch" {
 }
 
 resource "aws_security_group_rule" "opensearch-vpn-ingress-opensearch-port" {
-  type                     = "ingress"
-  from_port                = 9200
-  to_port                  = 9200
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.opensearch.id
-  source_security_group_id = aws_security_group.vpn.id
+  count                     = var.create_opensearch_sg ? 1 : 0
+  type                      = "ingress"
+  from_port                 = 9200
+  to_port                   = 9200
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.opensearch[0].id
+  source_security_group_id  = aws_security_group.vpn[0].id
 }
 
 resource "aws_security_group_rule" "opensearch-vpn-ingress-https-port" {
-  type                     = "ingress"
-  from_port                = 443
-  to_port                  = 443
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.opensearch.id
-  source_security_group_id = aws_security_group.vpn.id
+  count                     = var.create_opensearch_sg ? 1 : 0
+  type                      = "ingress"
+  from_port                 = 443
+  to_port                   = 443
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.opensearch[0].id
+  source_security_group_id  = aws_security_group.vpn[0].id
 }
 
 resource "aws_security_group_rule" "opensearch-vpn-ingress-http-port" {
-  type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.opensearch.id
-  source_security_group_id = aws_security_group.vpn.id
+  count                     = var.create_opensearch_sg ? 1 : 0
+  type                      = "ingress"
+  from_port                 = 80
+  to_port                   = 80
+  protocol                  = "tcp"
+  security_group_id         = aws_security_group.opensearch[0].id
+  source_security_group_id  = aws_security_group.vpn[0].id
 }
 
 resource "aws_security_group_rule" "opensearch-vpc-ingress" {
+  count             = var.create_opensearch_sg ? 1 : 0
   type              = "ingress"
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
-  security_group_id = aws_security_group.opensearch.id
+  security_group_id = aws_security_group.opensearch[0].id
   cidr_blocks       = [var.vpc_cidr]
 }
 
 resource "aws_security_group_rule" "opensearch-egress" {
+  count             = var.create_opensearch_sg ? 1 : 0
   type              = "egress"
   from_port         = -1
   to_port           = -1
   protocol          = -1
-  security_group_id = aws_security_group.opensearch.id
+  security_group_id = aws_security_group.opensearch[0].id
   cidr_blocks       = ["0.0.0.0/0"]
 }
+
 
 #######################################################
 # Mongo Out
