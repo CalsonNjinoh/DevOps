@@ -29,85 +29,71 @@ variable "redis_private_ip" {
 #########################################
 
 variable "create_default_sg" {
-  description = "Whether to create the Default security group"
-  type        = bool
-  default     = true
+  type    = bool
+  default = true
 }
 
 variable "create_redis_sg" {
-  description = "Whether to create the Redis security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_mqtt_sg" {
-  description = "Whether to create the MQTT security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_elephants_sg" {
-  description = "Whether to create the Elephants security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_nginx_sg" {
-  description = "Whether to create the Nginx security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_registration_server_sg" {
-  description = "Whether to create the Registration Server security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_ssh_sg" {
-  description = "Whether to create the SSH security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_api_sg" {
-  description = "Whether to create the API security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_alb_sg" {
-  description = "Whether to create the ALB security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_backups_sg" {
-  description = "Whether to create the Backups security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_vpn_sg" {
-  description = "Whether to create the VPN security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_opensearch_sg" {
-  description = "Whether to create the OpenSearch security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_backend_services_sg" {
-  description = "Whether to create the Backend Services security group"
-  type        = bool
-  default     = false
+  type    = bool
+  default = true
 }
 
 variable "create_lambda_sg" {
-  description = "Whether to create the Lambda VPC security group"
-  type        = bool
-  default     = true
+  type    = bool
+  default = true
 }
