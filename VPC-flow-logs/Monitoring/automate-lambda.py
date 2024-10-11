@@ -64,3 +64,22 @@ def lambda_handler(event, context):
     )
 
     return result
+
+
+
+
+#test event code :
+
+{
+  "version": "0",
+  "id": "12345678-1234-1234-1234-123456789012",
+  "detail-type": "Scheduled Event",
+  "source": "aws.events",
+  "account": "891377304437",
+  "time": "2024-10-11T12:00:00Z",
+  "region": "ca-central-1",
+  "resources": [
+    "arn:aws:scheduler:ca-central-1:891377304437:schedule/default/run-log-insights-query"
+  ],
+  "detail": {}
+}
