@@ -1,0 +1,16 @@
+#rejected port 
+
+fields @timestamp, srcAddr, dstAddr, action, protocol
+| filter action = "REJECT"
+| stats count() by srcAddr, action
+| sort count desc
+| limit 10
+
+
+#ssh port 
+
+fields @timestamp, srcAddr, dstAddr, action, protocol, dstPort
+| filter action = "ACCEPT" and dstPort = 22
+| stats count() by srcAddr, dstAddr
+| sort count desc
+| limit 10
