@@ -1,0 +1,35 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "logs:CreateLogGroup",
+            "Resource": "arn:aws:logs:ca-central-1:891377304437:*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": [
+                "arn:aws:logs:ca-central-1:891377304437:log-group:/aws/lambda/automate-log-insights-query:*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:StartQuery",
+                "logs:GetQueryResults"
+            ],
+            "Resource": [
+                "arn:aws:logs:ca-central-1:891377304437:log-group:vpcflowlogs:*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": "sns:Publish",
+            "Resource": "arn:aws:sns:ca-central-1:891377304437:mydemo-topic"
+        }
+    ]
+}
