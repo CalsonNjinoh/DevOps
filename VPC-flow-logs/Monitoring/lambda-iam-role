@@ -30,6 +30,14 @@
             "Effect": "Allow",
             "Action": "sns:Publish",
             "Resource": "arn:aws:sns:ca-central-1:891377304437:mydemo-topic"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeInstances",
+                "ec2:DescribeTags"
+            ],
+            "Resource": "*"
         }
     ]
 }
