@@ -387,6 +387,10 @@ def lambda_handler(event, context):
         account_id = boto3.client('sts').get_caller_identity()['Account']
         return instance_id, instance_name, region, account_id
 
+    # Safely extract a value from a query result or return a default
+    def safe_extract(row, field_name, default="N/A"):
+        return next((item['value'] for item in row if item['field'] == field_name), default)
+
     # Format Slack message attachments with colors and add contextual details
     def format_slack_message(query_label, results, color, no_data_message="No data found.", show_instance_details=False):
         # Handle no data condition
@@ -397,16 +401,16 @@ def lambda_handler(event, context):
             if query_label == 'Rejected Connections':
                 formatted_results = f"{'Source IP':<18} {'Dest IP':<18} {'Port':<6} {'Count':<5}\n" + "-" * 50 + "\n"
                 for row in results['results']:
-                    src_addr = next(item['value'] for item in row if item['field'] == 'srcAddr')
-                    dst_addr = next(item['value'] for item in row if item['field'] == 'dstAddr')
-                    dst_port = next(item['value'] for item in row if item['field'] == 'dstPort')
-                    count = next(item['value'] for item in row if 'count' in item['field'])
+                    src_addr = safe_extract(row, 'srcAddr')
+                    dst_addr = safe_extract(row, 'dstAddr')
+                    dst_port = safe_extract(row, 'dstPort')
+                    count = safe_extract(row, 'rejection_count')
                     formatted_results += f"{src_addr:<18} {dst_addr:<18} {dst_port:<6} {count:<5}\n"
             else:
                 formatted_results = f"{'Source IP':<20} {'Count':<5}\n" + "-" * 20 + "\n"
                 for row in results['results']:
-                    src_addr = next(item['value'] for item in row if item['field'] == 'srcAddr')
-                    count = next(item['value'] for item in row if 'count' in item['field'])
+                    src_addr = safe_extract(row, 'srcAddr')
+                    count = safe_extract(row, 'count')
                     formatted_results += f"{src_addr:<20} {count:<5}\n"
 
         # Include instance details only for Accepted SSH Connections
@@ -483,3 +487,4 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps('All queries executed and results sent to Slack.')
     }
+
