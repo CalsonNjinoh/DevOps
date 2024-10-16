@@ -14,3 +14,58 @@ fields @timestamp, srcAddr, dstAddr, action, protocol, dstPort
 | stats count() by srcAddr, dstAddr
 | sort count desc
 | limit 10
+
+
+#High Packet Count 
+
+fields @timestamp, srcAddr, dstAddr, packets
+| filter packets > 5000
+| stats sum(packets) as total_packets by srcAddr, dstAddr
+| sort total_packets desc
+| limit 10
+
+#large data transfer
+
+fields @timestamp, srcAddr, dstAddr, bytes
+| filter bytes > 1000000
+| stats sum(bytes) as total_bytes by srcAddr, dstAddr
+| sort total_bytes desc
+| limit 10
+
+
+#Non-TCP accpted traffic 
+
+fields @timestamp, srcAddr, dstAddr, action, protocol
+| filter action = "ACCEPT" and protocol != 6
+| stats count() by srcAddr, dstAddr, protocol
+| sort count desc
+| limit 10
+
+
+#Port-scan 
+
+fields @timestamp, srcAddr, dstPort, action, protocol
+| filter action = "REJECT"
+| stats count_distinct(dstPort) as port_count, count() as rejection_count by srcAddr
+| filter port_count > 10  # Show only IPs that tried more than 10 distinct ports
+| sort rejection_count desc
+| limit 10
+
+
+#spoofed IP 
+
+fields @timestamp, srcAddr, dstAddr, action, protocol
+| filter srcAddr in ["0.0.0.0", "255.255.255.255"]
+| stats count() by srcAddr, dstAddr
+| sort count desc
+| limit 10
+
+
+#ssh access detection 
+
+fields @timestamp, srcAddr, dstAddr, action, protocol, dstPort
+| filter action = "ACCEPT" and dstPort = 22
+| stats count() by srcAddr, dstAddr
+| sort count desc
+| limit 10
+
