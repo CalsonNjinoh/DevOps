@@ -292,7 +292,6 @@ def lambda_handler(event, context):
 
 #aetonix 
 
-
 import boto3
 import json
 from datetime import datetime, timedelta
@@ -304,7 +303,7 @@ client = boto3.client('logs')
 ec2_client = boto3.client('ec2')
 
 # Replace with your Slack Webhook URL
-slack_webhook_url = 'https://hooks.slack.com/services/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'
+slack_webhook_url = 'https://hooks.slack.com/services/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'
 
 # Replace with your specific VPC ID and region
 vpc_id = 'vpc-b7412fdf'
@@ -312,13 +311,13 @@ region_name = 'ca-central-1'
 
 def lambda_handler(event, context):
     # Define the CloudWatch Logs Insights queries
-    log_group_name = 'Prod/vpcflowlogs'
+    log_group_name = 'vpcflowlogs'
 
     # Time range for the queries (last 5 minutes)
     start_time = int((datetime.utcnow() - timedelta(minutes=5)).timestamp() * 1000)
     end_time = int(datetime.utcnow().timestamp() * 1000)
 
-    # Define queries with updated Rejected Connections query
+    # Define queries, including Port Scan Detection
     queries = {
         'Rejected Connections': '''
         fields @timestamp, srcAddr, dstAddr, action, protocol, dstPort
@@ -342,13 +341,6 @@ def lambda_handler(event, context):
         | sort spoofed_count desc
         | limit 10
         ''',
-        'General Rejected Connections': '''
-        fields @timestamp, srcAddr, dstAddr, action, protocol
-        | filter action = "REJECT"
-        | stats count() as general_rejection_count by srcAddr, action
-        | sort general_rejection_count desc
-        | limit 10
-        ''',
         'Large Data Transfers': '''
         fields @timestamp, srcAddr, dstAddr, bytes
         | filter bytes > 1000000
@@ -361,6 +353,14 @@ def lambda_handler(event, context):
         | filter packets > 5000
         | stats sum(packets) as total_packets by srcAddr, dstAddr
         | sort total_packets desc
+        | limit 10
+        ''',
+        'Port Scan Detection': '''
+        fields @timestamp, srcAddr, dstPort, action, protocol
+        | filter action = "REJECT"
+        | stats count_distinct(dstPort) as port_count, count() as rejection_count by srcAddr
+        | filter port_count > 10  # Only show IPs that tried more than 10 distinct ports
+        | sort rejection_count desc
         | limit 10
         '''
     }
@@ -397,7 +397,7 @@ def lambda_handler(event, context):
         if not results['results']:
             formatted_results = no_data_message
         else:
-            # For Rejected Connections, include Source IP, Destination IP, Port, and Count
+            # For Rejected Connections, include Source IP, Destination IP, Port, and Rejection Count
             if query_label == 'Rejected Connections':
                 formatted_results = f"{'Source IP':<18} {'Dest IP':<18} {'Port':<6} {'Count':<5}\n" + "-" * 50 + "\n"
                 for row in results['results']:
@@ -406,6 +406,30 @@ def lambda_handler(event, context):
                     dst_port = safe_extract(row, 'dstPort')
                     count = safe_extract(row, 'rejection_count')
                     formatted_results += f"{src_addr:<18} {dst_addr:<18} {dst_port:<6} {count:<5}\n"
+            # For Port Scan Detection, include Source IP, Distinct Ports, and Rejection Count
+            elif query_label == 'Port Scan Detection':
+                formatted_results = f"{'Source IP':<18} {'Port Count':<10} {'Rejections':<10}\n" + "-" * 50 + "\n"
+                for row in results['results']:
+                    src_addr = safe_extract(row, 'srcAddr')
+                    port_count = safe_extract(row, 'port_count')
+                    rejection_count = safe_extract(row, 'rejection_count')
+                    formatted_results += f"{src_addr:<18} {port_count:<10} {rejection_count:<10}\n"
+            # For Accepted SSH Connections, include Source IP, Destination IP, and SSH Count
+            elif query_label == 'Accepted SSH Connections':
+                formatted_results = f"{'Source IP':<18} {'Dest IP':<18} {'Count':<5}\n" + "-" * 50 + "\n"
+                for row in results['results']:
+                    src_addr = safe_extract(row, 'srcAddr')
+                    dst_addr = safe_extract(row, 'dstAddr')
+                    count = safe_extract(row, 'ssh_count')
+                    formatted_results += f"{src_addr:<18} {dst_addr:<18} {count:<5}\n"
+            # For Spoofed IP Addresses
+            elif query_label == 'Spoofed IP Addresses':
+                formatted_results = f"{'Source IP':<18} {'Dest IP':<18} {'Count':<5}\n" + "-" * 50 + "\n"
+                for row in results['results']:
+                    src_addr = safe_extract(row, 'srcAddr')
+                    dst_addr = safe_extract(row, 'dstAddr')
+                    count = safe_extract(row, 'spoofed_count')
+                    formatted_results += f"{src_addr:<18} {dst_addr:<18} {count:<5}\n"
             else:
                 formatted_results = f"{'Source IP':<20} {'Count':<5}\n" + "-" * 20 + "\n"
                 for row in results['results']:
@@ -448,11 +472,19 @@ def lambda_handler(event, context):
         # Set default for show_instance_details
         show_instance_details = False
         
-        # Add no data message based on query type
+        # Add specific no data messages for each query type
         if query_label == 'High Packet Count':
             no_data_message = "No high packet counts found in the last 5 minutes."
         elif query_label == 'Large Data Transfers':
             no_data_message = "No large data transfers found in the last 5 minutes."
+        elif query_label == 'Rejected Connections':
+            no_data_message = "No data found for 5+ rejected connections in the last 5 minutes."
+        elif query_label == 'Port Scan Detection':
+            no_data_message = "No port scan activity detected in the last 5 minutes."
+        elif query_label == 'Accepted SSH Connections':
+            no_data_message = "No accepted SSH connections found in the last 5 minutes."
+        elif query_label == 'Spoofed IP Addresses':
+            no_data_message = "No spoofed IP addresses found in the last 5 minutes."
         else:
             no_data_message = "No data found."
 
@@ -461,6 +493,10 @@ def lambda_handler(event, context):
         elif query_label == 'Accepted SSH Connections':
             color = "#FFFF00"  # Yellow for accepted SSH connections
             show_instance_details = True  # Show instance details only for SSH
+        elif query_label == 'Port Scan Detection':
+            color = "#FF4500"  # Orange for port scan detection
+        elif query_label == 'Spoofed IP Addresses':
+            color = "#FF6347"  # A different color for spoofed IPs
         else:
             color = "#36a64f"  # Green for other queries
 
@@ -487,4 +523,6 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps('All queries executed and results sent to Slack.')
     }
+
+
 
