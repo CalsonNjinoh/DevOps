@@ -1,215 +1,145 @@
-#event-bridge 
-#main.tf
-
-############################################
-# Create EventBridge Scheduler
-############################################
-resource "aws_scheduler_schedule" "schedule" {
-  name                = var.schedule_name
-  description         = var.schedule_description
-  schedule_expression = var.schedule_pattern  # Define a rate or cron expression
-
-  target {
-    arn      = var.lambda_function_arn  # This should reference the Lambda ARN dynamically
-    role_arn = aws_iam_role.lambda_execution_role.arn  # Use the role we create below
-  }
-
-  flexible_time_window {
-    mode = "OFF"
-  }
-}
-
-############################################
-# IAM Role for EventBridge Scheduler to invoke Lambda
-############################################
-resource "aws_iam_role" "lambda_execution_role" {
-  name = "scheduler_lambda_execution_role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Action    = "sts:AssumeRole",
-        Effect    = "Allow",
-        Principal = {
-          Service = "scheduler.amazonaws.com"  # Allow EventBridge Scheduler to assume this role
-        }
-      }
-    ]
-  })
-}
-
-############################################
-# IAM Policy for Invoking Lambda
-############################################
-resource "aws_iam_role_policy" "lambda_invoke_policy" {
-  name   = "lambda_invoke_policy"
-  role   = aws_iam_role.lambda_execution_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "lambda:InvokeFunction"
-        ],
-        Resource = [
-          "${var.lambda_function_arn}:*",  # Use the lambda function ARN dynamically
-          var.lambda_function_arn  # The base ARN without versioning
-        ]
-      }
-    ]
-  })
-}
-
-############################################
-# Lambda Permission to allow EventBridge Scheduler to invoke Lambda
-############################################
-resource "aws_lambda_permission" "allow_scheduler_invoke_lambda" {
-  statement_id  = "AllowExecutionFromScheduler"
-  action        = "lambda:InvokeFunction"
-  function_name = var.lambda_function_arn  # Dynamically use Lambda ARN here
-  principal     = "scheduler.amazonaws.com"
-  source_arn    = aws_scheduler_schedule.schedule.arn  # Fixed reference to aws_scheduler_schedule
+provider "aws" {
+  region = "ca-central-1"
 }
 
 
-#output.tf
+########################################
+# Create VPC, Subnets, Route Tables
+########################################
 
-output "eventbridge_scheduler_arn" {
-  value = aws_scheduler_schedule.schedule.arn  # Fixed reference to aws_scheduler_schedule
+module "network" {
+  source = "../../../terraform-modules/vpc"
+  name   = var.name
+
+  single_nat_gateway     = false
+  one_nat_gateway_per_az = true
+
+  azs  = var.azs
+  cidr = var.cidr
+
+  public_subnets                       = var.public_subnets
+  private_subnets                      = var.private_subnets
+  tags                                 = var.tags
+#  security_group_ids                   = []
+  centralized_vpc_flow_logs_bucket_arn = var.centralized_vpc_flow_logs_bucket_arn
+  cloudwatch_log_group_arn             = module.network.cloudwatch_log_group_arn
+  max_aggregation_interval             = 60
+  log_retention_days                   = 365
+ vpc_flow_logs_role_arn                = "arn:aws:iam::762372983622:role/vpcFlowLogsRole_ca-central-1"
+  
+  
 }
 
 
-#variables.tf
+########################################  
+# EventBridge
+########################################
 
-variable "schedule_name" {
-  description = "Name of the EventBridge schedule"
-  default     = "my-lambda-scheduler"
-}
-
-variable "schedule_description" {
-  description = "Description of the EventBridge schedule"
-  default     = "A scheduled rule to run every 5 minutes"
-}
-
-variable "schedule_pattern" {
-  description = "The schedule expression (rate or cron)"
-  default     = "rate(5 minutes)"  # You can use a cron expression if needed
-}
-
-variable "lambda_function_arn" {
-  description = "ARN of the Lambda function to invoke"
-}
-
-
-
-Lambda 
-
-############################################
-# Create IAM Role for Lambda
-############################################
-resource "aws_iam_role" "lambda_role" {
-  name = "VPCFlowLogs_Lambda_Role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Action = "sts:AssumeRole",
-        Effect = "Allow",
-        Principal = {
-          Service = "lambda.amazonaws.com",
-        },
-      },
-    ]
-  })
-}
-
-############################################
-# Attach IAM Policy to Lambda Role
-############################################
-resource "aws_iam_policy" "lambda_policy" {
-  name        = "VPCFlowLogs_Lambda_Policy"
-  description = "Policy for Lambda to write logs to CloudWatch"
-  path        = "/"
-  policy = jsonencode({
-    Version : "2012-10-17",
-    Statement : [
-      {
-        Effect : "Allow",
-        Action : [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ],
-        Resource : "arn:aws:logs:*:*:*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
-  policy_arn = aws_iam_policy.lambda_policy.arn
-  role       = aws_iam_role.lambda_role.name
-}
-
-############################################
-# Create Lambda Function
-############################################
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  source_dir  = "${path.module}/python"  # Directory where your Lambda code is located
-  output_path = "${path.module}/lambda.zip"
-}
-
-resource "aws_lambda_function" "vpcflow_logs_lambda" {
-  function_name    = var.function_name
-  role             = aws_iam_role.lambda_role.arn
-  handler          = var.handler
-  runtime          = var.runtime
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
-  timeout          = 60
-  memory_size      = 128
-
-  environment {
-    variables = var.environment_variables
-  }
+module "eventbridge" {
+  source                        = "git::git@github.com:Aetonix/terraform-modules.git//eventbridge?ref=main"
+  environment                   = "logs-archive-${var.region}"
+  sns_topic_arn                 = module.sns_notify_lambda.sns_topic_arn
+  enable_guardduty              = true
+  create_eventbridge_scheduler  = true
+  schedule_name                 = "run-lambda-vpcflow-logs-query"
+  schedule_description          = "Schedule to run Lambda for VPC flow log queries"
+  schedule_pattern              = "cron(14 0 ? * MON-FRI *)"
+  create_lambda_resources       = true
+  function_name                 = "vpc-flow-log-query-lambda"
+  lambda_function_arn           = module.eventbridge.lambda_function_arn
+  handler                       = "index.handler"	
+  runtime                       = "python3.12"
+  excluded_rule_names           = []
+  rules_config                  = []
+  
 }
 
 
-
-#output.tf
-
-output "lambda_function_arn" {
-  value = aws_lambda_function.vpcflow_logs_lambda.arn
-  description = "The ARN of the Lambda function"
+module "sns_notify_lambda" {
+  source = "git::git@github.com:Aetonix/terraform-modules.git//slack-notify-lambda?ref=main"
+  env    = var.name
 }
 
 
-
-#variables.tf 
-
-variable "function_name" {
-  type = string
-  description = "Name of the Lambda function"
+module "iam_policies" {
+  source                                       = "../../../terraform-modules/iam-policies"
+  //secrets_arn                                  = data.aws_secretsmanager_secret.backend.arn
+  //firebase_arn                                 = data.aws_secretsmanager_secret.firebase.arn
+  env                                          = var.name
+  create_chime_policy                          = true
+  create_secrets_policy                        = true
+  create_backup_policy                         = true
+  create_cloudwatch_agent_policy               = true
+  create_assume_cross_account_role_policy      = true
+  create_s3_data_uploads_us_policy             = true
+  create_systems_manager_get_parameters_policy = true
+  create_vpc_flow_logs_policy                  = true
+  //secrets_encryption_key_arn                   = data.aws_kms_key.secrets_key.arn
+  //backup_bucket_arn                            = var.backups_bucket_arn
+  //cloudwatch_agent_role                        = var.cloudwatch_agent_role
 }
 
-variable "handler" {
-  type = string
-  description = "The Lambda function handler (e.g., index.handler)"
+module "iam" {
+  source = "git::git@github.com:Aetonix/terraform-modules.git//iam?ref=main"
+  tags   = var.tags
+  name   = var.name
 }
+module "iam_ssm_lambda" {
+  source              = "git::git@github.com:Aetonix/terraform-modules.git//iam-roles?ref=main"
+  create_ssm_role     = true
+  create_backend_role = true
+  create_backup_role  = true
+  create_vpc_flow_logs_role = true
 
-variable "runtime" {
-  type = string
-  description = "The runtime environment for the Lambda function (e.g., python3.8)"
+  //OU  = var.account_OU
+  env = var.env
+  policies_for_backend_role = [
+    {
+      policy_arn = module.iam_policies.secrets_policy
+    },
+    {
+      policy_arn = module.iam_policies.chime_policy
+    },
+    {
+      policy_arn = module.iam_policies.cloudwatch_agent_policy
+    }
+  ]
+  backup_role_policies = [
+    {
+      policy_arn = module.iam_policies.secrets_policy
+    },
+    {
+      policy_arn = module.iam_policies.backup_policy
+    },
+    {
+      policy_arn = module.iam_policies.cloudwatch_agent_policy
+    }
+  ]
+  ssm_role_policies = [
+    {
+      policy_arn = module.iam_policies.cloudwatch_agent_policy
+    }
+  ]
+  policies_for_production_role = [
+    {
+      policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+    },
+    {
+      policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+    },
+    {
+      policy_arn = "arn:aws:iam::aws:policy/AmazonEventBridgeFullAccess"
+    },
+    {
+      policy_arn = module.iam_policies.s3_data_uploads_us_arn
+    },
+    {
+      policy_arn = module.iam_policies.systems_manager_get_parameters_arn
+    }
+  ]
+  policies_for_vpc_flow_logs_role = [
+    {
+      policy_arn = module.iam_policies.vpc_flow_logs_policy_arn
+    }
+  ]
 }
-
-variable "environment_variables" {
-  type = map(string)
-  description = "Environment variables for the Lambda function"
-  default = {}
-}
-
-
